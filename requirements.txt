@@ -1,6 +1,6 @@
 # AI/ML Libraries
-langchain==0.1.0
-langchain-community==0.0.10
+langchain==0.3.27
+langchain-community==0.3.27
 ollama==0.1.6
 
 # PDF Processing
