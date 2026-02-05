@@ -1,0 +1,188 @@
+# AI RAG Chatbot Architecture
+
+## System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        User Interface                            │
+│                          (main.py)                               │
+│                    Command Line Interface                        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      RAG Chatbot Layer                           │
+│                      (rag_chatbot.py)                            │
+│  ┌──────────────────┐          ┌──────────────────┐            │
+│  │  Query Handler   │◄────────►│   Ollama LLM     │            │
+│  │  RetrievalQA     │          │   (llama2)       │            │
+│  └─────────┬────────┘          └──────────────────┘            │
+└────────────┼─────────────────────────────────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Vector Store Layer                            │
+│                    (vector_store.py)                             │
+│  ┌────────────────────────────────────────────────────┐         │
+│  │             ChromaDB Vector Database                │         │
+│  │  ┌──────────────┐        ┌──────────────────┐     │         │
+│  │  │  Embeddings  │◄──────►│ Similarity Search│     │         │
+│  │  │   Storage    │        │    & Retrieval   │     │         │
+│  │  └──────────────┘        └──────────────────┘     │         │
+│  └────────────────────────────────────────────────────┘         │
+└────────────┬────────────────────────────────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  Document Processing Layer                       │
+│                     (pdf_loader.py)                              │
+│  ┌──────────────┐         ┌──────────────────┐                 │
+│  │  PDF Loader  │────────►│  Text Splitter   │                 │
+│  │  (PyPDF)     │         │  (Chunking)      │                 │
+│  └──────────────┘         └──────────────────┘                 │
+└────────────┬────────────────────────────────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         Data Source                              │
+│                       PDF Documents                              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Data Flow
+
+### 1. Document Ingestion
+```
+PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
+                                           ▲
+                                           │
+                                    Ollama Embeddings
+                                   (nomic-embed-text)
+```
+
+### 2. Query Processing
+```
+User Query → RAG Chatbot → Vector Store (Similarity Search)
+                │                    │
+                │                    ▼
+                │              Relevant Chunks
+                │                    │
+                └───────────┬────────┘
+                            ▼
+                     Context + Query
+                            │
+                            ▼
+                      Ollama LLM
+                       (llama2)
+                            │
+                            ▼
+                   Generated Answer + Sources
+                            │
+                            ▼
+                          User
+```
+
+## Component Details
+
+### PDF Loader (`pdf_loader.py`)
+- **Purpose**: Load and process PDF documents
+- **Key Functions**:
+  - `load_pdf()`: Load single PDF
+  - `load_multiple_pdfs()`: Load multiple PDFs
+- **Parameters**:
+  - `chunk_size`: 1000 characters (default)
+  - `chunk_overlap`: 200 characters (default)
+
+### Vector Store (`vector_store.py`)
+- **Purpose**: Manage document embeddings and retrieval
+- **Key Functions**:
+  - `add_documents()`: Add documents to vector store
+  - `load_existing()`: Load existing vector store
+  - `similarity_search()`: Search for similar documents
+  - `get_retriever()`: Get retriever for RAG
+- **Storage**: ChromaDB (persistent on disk)
+- **Embeddings**: Ollama nomic-embed-text
+
+### RAG Chatbot (`rag_chatbot.py`)
+- **Purpose**: Handle user queries with RAG
+- **Key Functions**:
+  - `ask()`: Answer single question
+  - `chat()`: Interactive chat loop
+- **Components**:
+  - Ollama LLM for generation
+  - RetrievalQA chain from LangChain
+  - Custom prompt template
+- **Features**:
+  - Source citation with page numbers
+  - Context-aware responses
+
+### Main Application (`main.py`)
+- **Purpose**: CLI entry point
+- **Key Functions**:
+  - `setup_vector_store()`: Initialize vector store
+  - `main()`: Application entry point
+- **Arguments**:
+  - `--pdf`: PDF files to load
+  - `--model`: LLM model to use
+  - `--embedding-model`: Embedding model
+  - `--reload`: Force reload PDFs
+
+## External Dependencies
+
+### Ollama Models
+- **llama2**: Language model for text generation
+- **nomic-embed-text**: Embedding model for vector representations
+
+### Python Libraries
+- **langchain**: RAG framework
+- **langchain-community**: Community integrations
+- **chromadb**: Vector database
+- **pypdf**: PDF processing
+- **ollama**: Ollama client
+
+## Configuration
+
+### Environment Variables
+- Not currently used, but can be added for:
+  - Ollama API endpoint
+  - Model names
+  - Vector store path
+
+### Default Settings
+- Chunk size: 1000 characters
+- Chunk overlap: 200 characters
+- LLM model: llama2
+- Embedding model: nomic-embed-text
+- Temperature: 0.7
+- Retrieval k: 4 documents
+- Vector store: ./chroma_db
+
+## Scalability Considerations
+
+### Current Implementation
+- Single machine deployment
+- Local Ollama instance
+- Persistent ChromaDB storage
+- Suitable for: Personal use, small teams, up to thousands of pages
+
+### Potential Improvements
+- Cloud-based vector store (Pinecone, Weaviate)
+- Remote Ollama or OpenAI API
+- Batch processing for large document sets
+- Web interface (Streamlit, Gradio)
+- Multi-user support with separate collections
+
+## Security Features
+
+### Implemented
+- ✅ Updated dependencies (no known vulnerabilities)
+- ✅ Local processing (no data sent to external APIs)
+- ✅ Input validation and error handling
+- ✅ No hardcoded credentials
+
+### Best Practices
+- Run in virtual environment
+- Keep dependencies updated
+- Sanitize file paths
+- Validate PDF files before processing
+- Use .env for sensitive configuration
