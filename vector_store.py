@@ -46,7 +46,7 @@ class VectorStore:
             documents: List of document chunks to add
         """
         if not documents:
-            print("No documents to add")
+            print("Warning: Empty document list provided, no documents will be added")
             return
         
         if self.vectorstore is None:
@@ -79,7 +79,7 @@ class VectorStore:
             print("Loaded existing vector store")
             return True
         except Exception as e:
-            print(f"Could not load existing vector store: {e}")
+            print(f"Vector store does not exist yet or failed to load: {e}")
             return False
     
     def similarity_search(self, query: str, k: int = 4) -> List:
@@ -94,7 +94,7 @@ class VectorStore:
             List of similar documents
         """
         if self.vectorstore is None:
-            print("Vector store not initialized")
+            print("Warning: Vector store not initialized. Please load documents first.")
             return []
         
         results = self.vectorstore.similarity_search(query, k=k)
@@ -111,6 +111,6 @@ class VectorStore:
             Retriever object
         """
         if self.vectorstore is None:
-            raise ValueError("Vector store not initialized")
+            raise ValueError("Vector store not initialized. Please load documents first using add_documents() or load_existing().")
         
         return self.vectorstore.as_retriever(search_kwargs={"k": k})

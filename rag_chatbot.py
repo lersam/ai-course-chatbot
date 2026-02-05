@@ -84,7 +84,9 @@ Answer:"""
             
             return answer
         except Exception as e:
-            return f"Error generating answer: {e}"
+            # Log full exception for debugging while providing user-friendly message
+            print(f"Debug: Exception occurred: {e}")
+            return "Unable to generate an answer. Please try rephrasing your question or check if the vector store is properly initialized."
     
     def chat(self) -> None:
         """Interactive chat loop."""
