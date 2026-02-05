@@ -1,12 +1,13 @@
-# Core dependencies for RAG chatbot
-langchain>=0.1.0
-langchain-community>=0.0.10
-chromadb>=0.4.20
-pypdf>=3.17.0
-ollama>=0.1.0
+# AI/ML Libraries
+langchain
+langchain-community
+ollama
+
+# PDF Processing
+pypdf
+
+# Vector Store
+chromadb
 
 # Utilities
-python-dotenv>=1.0.0
-
-# For creating sample PDFs (development only)
-reportlab>=4.0.0
+python-dotenv

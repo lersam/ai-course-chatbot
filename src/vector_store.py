@@ -1,9 +1,8 @@
 """Vector store module for managing embeddings with ChromaDB."""
 
 import chromadb
-from chromadb.config import Settings
-from typing import List, Dict
 import ollama
+from typing import List, Dict
 
 
 class VectorStore:
