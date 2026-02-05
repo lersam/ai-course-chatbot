@@ -4,10 +4,10 @@ Loads PDF files and splits them into chunks for vector storage.
 """
 
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from typing import List
 import os
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 class PDFLoader:
     """Handles loading and processing PDF files."""
@@ -46,6 +46,7 @@ class PDFLoader:
         documents = loader.load()
         
         # Split into chunks
+        # langchain splitters expose split_documents
         chunks = self.text_splitter.split_documents(documents)
         
         print(f"Loaded {len(documents)} pages from {pdf_path}")
