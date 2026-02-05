@@ -1,13 +1,13 @@
 # AI/ML Libraries
 langchain==0.3.27
 langchain-community==0.3.27
-ollama==0.1.6
+ollama==0.6.1
 
 # PDF Processing
-pypdf==3.17.4
+pypdf==6.6.2
 
 # Vector Store
-chromadb==0.4.22
+chromadb==1.4.1
 
 # Utilities
-python-dotenv==1.0.0
+python-dotenv==1.2.1

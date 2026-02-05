@@ -24,19 +24,19 @@ def setup_vector_store(pdf_paths, force_reload=False):
         VectorStore instance
     """
     vector_store = VectorStore()
-    
+
     # Check if vector store already exists
     if not force_reload and os.path.exists(vector_store.persist_directory):
         print("Loading existing vector store...")
         if vector_store.load_existing():
             return vector_store
-    
+
     # Load PDFs if provided or if forcing reload
     if pdf_paths:
         print("\nLoading PDF files...")
         pdf_loader = PDFLoader()
         documents = pdf_loader.load_multiple_pdfs(pdf_paths)
-        
+
         if documents:
             print("\nCreating vector store...")
             vector_store.add_documents(documents)
@@ -48,7 +48,7 @@ def setup_vector_store(pdf_paths, force_reload=False):
         print("No PDF files provided and no existing vector store found.")
         print("Please provide PDF files using --pdf argument.")
         sys.exit(1)
-    
+
     return vector_store
 
 
@@ -77,20 +77,20 @@ def main():
         action="store_true",
         help="Force reload PDFs even if vector store exists"
     )
-    
+
     args = parser.parse_args()
-    
-    print("="*60)
+
+    print("=" * 60)
     print("AI RAG Chatbot - PDF Document Q&A")
-    print("="*60)
-    
+    print("=" * 60)
+
     # Setup vector store
     vector_store = setup_vector_store(args.pdf, args.reload)
-    
+
     # Initialize chatbot
     print(f"\nInitializing chatbot with model: {args.model}")
     chatbot = RAGChatbot(vector_store, model_name=args.model)
-    
+
     # Start interactive chat
     chatbot.chat()
 
