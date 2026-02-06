@@ -3,7 +3,6 @@
 Main Application
 Entry point for the AI RAG Chatbot application.
 """
-import os
 import argparse
 
 from ai_course_chatbot.ai_modules import VectorStore, PDFLoader

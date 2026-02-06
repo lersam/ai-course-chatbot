@@ -5,7 +5,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        User Interface                           │
-│                          (main.py)                              │
+│                  (setup_vector_store.py)                        │
 │                    Command Line Interface                       │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -60,6 +60,10 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
                                    (nomic-embed-text)
 ```
 
+Notes:
+- The helper function `setup_vector_store(pdf_paths)` now strictly accepts explicit PDF paths and loads those PDFs into a newly-created `VectorStore`. It does not attempt to auto-detect or load an existing vector store on disk.
+- If no PDFs are provided or no documents are extracted, the function will return None (and the CLI will report the issue). This makes ingestion deterministic and explicit.
+
 ### 2. Query Processing
 ```
 User Query → RAG Chatbot → Vector Store (Similarity Search)
@@ -97,7 +101,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
 - **Purpose**: Manage document embeddings and retrieval
 - **Key Functions**:
   - `add_documents()`: Add documents to vector store
-  - `load_existing()`: Load existing vector store
+  - `load_existing()`: Load existing vector store (kept for backward compatibility but not used by `setup_vector_store`)
   - `similarity_search()`: Search for similar documents
   - `get_retriever()`: Get retriever for RAG
 - **Storage**: ChromaDB (persistent on disk)
@@ -116,16 +120,18 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - Source citation with page numbers
   - Context-aware responses
 
-### Main Application (`main.py`)
-- **Purpose**: CLI entry point
+### Main Application (`setup_vector_store.py`)
+- **Purpose**: CLI entry point and helper to build a VectorStore from PDFs
 - **Key Functions**:
-  - `setup_vector_store()`: Initialize vector store
-  - `main()`: Application entry point
+  - `setup_vector_store(pdf_paths)`: Initialize a new VectorStore by loading the provided PDF paths. This helper requires explicit PDF paths and will return the populated `VectorStore` or None if no documents were loaded.
+  - `main()`: Optional helper that parses CLI args and calls `setup_vector_store`.
 - **Arguments**:
-  - `--pdf`: PDF files to load
-  - `--model`: LLM model to use
-  - `--embedding-model`: Embedding model
-  - `--reload`: Force reload PDFs
+  - `--pdf`: PDF files to load (required to build a vector store)
+  - `--model`: LLM model to use (default: llama2)
+  - `--embedding-model`: Embedding model (default: nomic-embed-text)
+
+Notes:
+- The previous `--reload`/auto-reload behavior was intentionally removed: re-loading or overwriting an existing collection must be handled explicitly by the user or by an enhanced helper if desired.
 
 ## External Dependencies
 
