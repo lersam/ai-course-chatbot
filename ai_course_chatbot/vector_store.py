@@ -2,19 +2,17 @@
 Vector Store Module
 Manages document embeddings and vector storage using ChromaDB.
 """
+import os
 
-import chromadb
-from chromadb.config import Settings
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import OllamaEmbeddings
-from typing import List, Optional
-import os
+from typing import List
 
 
 class VectorStore:
     """Manages vector storage for document embeddings."""
-    
-    def __init__(self, collection_name: str = "pdf_documents", 
+
+    def __init__(self, collection_name: str = "pdf_documents",
                  persist_directory: str = "./chroma_db",
                  embedding_model: str = "nomic-embed-text"):
         """
@@ -28,16 +26,16 @@ class VectorStore:
         self.collection_name = collection_name
         self.persist_directory = persist_directory
         self.embedding_model = embedding_model
-        
+
         # Create persist directory if it doesn't exist
         os.makedirs(persist_directory, exist_ok=True)
-        
+
         # Initialize Ollama embeddings
         self.embeddings = OllamaEmbeddings(model=embedding_model)
-        
+
         # Initialize ChromaDB vector store
         self.vectorstore = None
-    
+
     def add_documents(self, documents: List) -> None:
         """
         Add documents to the vector store.
@@ -48,7 +46,7 @@ class VectorStore:
         if not documents:
             print("Warning: Empty document list provided, no documents will be added")
             return
-        
+
         if self.vectorstore is None:
             # Create new vector store
             self.vectorstore = Chroma.from_documents(
@@ -60,9 +58,9 @@ class VectorStore:
         else:
             # Add to existing vector store
             self.vectorstore.add_documents(documents)
-        
+
         print(f"Added {len(documents)} documents to vector store")
-    
+
     def load_existing(self) -> bool:
         """
         Load an existing vector store from disk.
@@ -81,7 +79,7 @@ class VectorStore:
         except Exception as e:
             print(f"Vector store does not exist yet or failed to load: {e}")
             return False
-    
+
     def similarity_search(self, query: str, k: int = 4) -> List:
         """
         Search for similar documents.
@@ -96,10 +94,10 @@ class VectorStore:
         if self.vectorstore is None:
             print("Warning: Vector store not initialized. Please load documents first.")
             return []
-        
+
         results = self.vectorstore.similarity_search(query, k=k)
         return results
-    
+
     def get_retriever(self, k: int = 4):
         """
         Get a retriever for the vector store.
@@ -111,6 +109,7 @@ class VectorStore:
             Retriever object
         """
         if self.vectorstore is None:
-            raise ValueError("Vector store not initialized. Please load documents first using add_documents() or load_existing().")
-        
+            raise ValueError(
+                "Vector store not initialized. Please load documents first using add_documents() or load_existing().")
+
         return self.vectorstore.as_retriever(search_kwargs={"k": k})

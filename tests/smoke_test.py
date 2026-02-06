@@ -25,7 +25,7 @@ except Exception as e:
     print('PDFLoader test failed')
     traceback.print_exc()
 try:
-    import vector_store
+    from ai_course_chatbot import vector_store
     from ai_course_chatbot.ai_modules import rag_chatbot
 
     print('Imported rag_chatbot and vector_store')

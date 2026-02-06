@@ -5,7 +5,7 @@ This script demonstrates how to use the chatbot programmatically.
 """
 
 from ai_course_chatbot.ai_modules.pdf_loader import PDFLoader
-from vector_store import VectorStore
+from ai_course_chatbot.vector_store import VectorStore
 from ai_course_chatbot.ai_modules.rag_chatbot import RAGChatbot
 
 

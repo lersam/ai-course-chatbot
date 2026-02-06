@@ -35,7 +35,7 @@ class TestVectorStore(unittest.TestCase):
     
     def test_vector_store_initialization(self):
         """Test that vector store initializes correctly."""
-        from vector_store import VectorStore
+        from ai_course_chatbot.vector_store import VectorStore
         
         with tempfile.TemporaryDirectory() as temp_dir:
             store = VectorStore(
@@ -48,7 +48,7 @@ class TestVectorStore(unittest.TestCase):
     
     def test_vector_store_empty_documents(self):
         """Test adding empty documents list."""
-        from vector_store import VectorStore
+        from ai_course_chatbot.vector_store import VectorStore
         
         with tempfile.TemporaryDirectory() as temp_dir:
             store = VectorStore(persist_directory=temp_dir)
@@ -64,7 +64,7 @@ class TestRAGChatbot(unittest.TestCase):
     def test_chatbot_initialization(self, mock_qa, mock_ollama):
         """Test that chatbot initializes correctly."""
         from ai_course_chatbot.ai_modules.rag_chatbot import RAGChatbot
-        from vector_store import VectorStore
+        from ai_course_chatbot.vector_store import VectorStore
         
         with tempfile.TemporaryDirectory() as temp_dir:
             # Mock vector store

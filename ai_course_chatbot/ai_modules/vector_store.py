@@ -1,6 +1,6 @@
 import os
 
-from vector_store import VectorStore
+from ai_course_chatbot.vector_store import VectorStore
 from .pdf_loader import PDFLoader
 
 def setup_vector_store(pdf_paths, force_reload=False):
