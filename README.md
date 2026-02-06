@@ -49,7 +49,7 @@ Before running the application, ensure you have:
 Load a PDF and start chatting:
 
 ```bash
-python main.py --pdf path/to/your/document.pdf
+python ai_course_chatbot/setup_vector_store.py --pdf path/to/your/document.pdf
 ```
 
 ### Multiple PDFs
@@ -57,7 +57,7 @@ python main.py --pdf path/to/your/document.pdf
 Load multiple PDF files:
 
 ```bash
-python main.py --pdf file1.pdf file2.pdf file3.pdf
+python ai_course_chatbot/setup_vector_store.py --pdf file1.pdf file2.pdf file3.pdf
 ```
 
 ### Custom Model
@@ -65,7 +65,34 @@ python main.py --pdf file1.pdf file2.pdf file3.pdf
 Use a different Ollama model:
 
 ```bash
-python main.py --pdf document.pdf --model mistral
+python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model mistral
+```
+
+### HTTP API example: POST /pdf/load
+
+Instead of using the CLI, you can call the FastAPI endpoint directly to load a PDF (this example posts a JSON body). The `topics` field accepts one of the Topics enum values (for example `GameProgrammingBooks`).
+
+Curl example:
+
+```bash
+curl -X POST "http://localhost:8000/pdf/load" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://inventwithpython.com/makinggames.pdf", "topics": "GameProgrammingBooks"}'
+```
+
+Python requests example:
+
+```python
+import requests
+
+resp = requests.post(
+    "http://localhost:8000/pdf/load",
+    json={
+        "url": "https://inventwithpython.com/makinggames.pdf",
+        "topics": "GameProgrammingBooks"
+    }
+)
+print(resp.json())
 ```
 
 ### Force Reload

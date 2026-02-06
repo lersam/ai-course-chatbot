@@ -16,8 +16,10 @@ pypdf==6.6.2
 # Vector Store
 chromadb==1.4.1
 
-# Utilities
-python-dotenv==1.2.1
+# server
+uvicorn
+fastapi
+python-multipart
 
 # Testing
 pytest
