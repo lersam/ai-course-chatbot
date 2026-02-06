@@ -6,7 +6,7 @@ Note: These are basic smoke tests. Full testing requires actual PDFs and Ollama 
 import unittest
 import os
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 
 class TestPDFLoader(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestPDFLoader(unittest.TestCase):
     
     def test_pdf_loader_initialization(self):
         """Test that PDF loader initializes correctly."""
-        from pdf_loader import PDFLoader
+        from ai_course_chatbot.ai_modules.pdf_loader import PDFLoader
         
         loader = PDFLoader(chunk_size=500, chunk_overlap=50)
         self.assertEqual(loader.chunk_size, 500)
@@ -23,7 +23,7 @@ class TestPDFLoader(unittest.TestCase):
     
     def test_pdf_loader_file_not_found(self):
         """Test that PDF loader raises error for non-existent file."""
-        from pdf_loader import PDFLoader
+        from ai_course_chatbot.ai_modules.pdf_loader import PDFLoader
         
         loader = PDFLoader()
         with self.assertRaises(FileNotFoundError):
@@ -63,7 +63,7 @@ class TestRAGChatbot(unittest.TestCase):
     @patch('rag_chatbot.RetrievalQA')
     def test_chatbot_initialization(self, mock_qa, mock_ollama):
         """Test that chatbot initializes correctly."""
-        from rag_chatbot import RAGChatbot
+        from ai_course_chatbot.ai_modules.rag_chatbot import RAGChatbot
         from vector_store import VectorStore
         
         with tempfile.TemporaryDirectory() as temp_dir:

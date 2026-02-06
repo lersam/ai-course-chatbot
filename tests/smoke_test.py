@@ -3,7 +3,7 @@ import traceback
 print('\n--- Running smoke test script (smoke_test.py) ---')
 ok = True
 try:
-    from pdf_loader import PDFLoader
+    from ai_course_chatbot.ai_modules.pdf_loader import PDFLoader
 
     print('Imported PDFLoader')
     pl = PDFLoader()
@@ -25,7 +25,8 @@ except Exception as e:
     print('PDFLoader test failed')
     traceback.print_exc()
 try:
-    import rag_chatbot, vector_store
+    import vector_store
+    from ai_course_chatbot.ai_modules import rag_chatbot
 
     print('Imported rag_chatbot and vector_store')
 except Exception as e:
