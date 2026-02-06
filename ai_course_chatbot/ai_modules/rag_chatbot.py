@@ -6,7 +6,7 @@ Implements a Retrieval-Augmented Generation chatbot using Ollama.
 from langchain_community.llms import Ollama
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
-from ai_course_chatbot.vector_store import VectorStore
+from .vector_store import VectorStore
 
 
 class RAGChatbot:

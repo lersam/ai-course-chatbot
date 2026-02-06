@@ -3,10 +3,10 @@ PDF Loader Module
 Loads PDF files and splits them into chunks for vector storage.
 """
 
-from langchain_community.document_loaders import PyPDFLoader
-from typing import List
 import os
+from typing import List
 
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 class PDFLoader:
