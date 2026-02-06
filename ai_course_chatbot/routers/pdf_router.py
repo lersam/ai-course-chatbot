@@ -32,7 +32,7 @@ async def _save_upload_file_bytes(data: bytes, dest_path: str):
     await asyncio.to_thread(_sync_write, data, dest_path)
 
 
-@router.post("/load", summary="Load a PDF document", description="Load a PDF document from a JSON body that contains a `url` field (either an http(s) URL or a local path).")
+@router.post("/load", summary="Download PDF document", description="Download a PDF from a URL and save it into the temp downloads directory.")
 async def load_pdf(request: PDFRequest):
     """Load a PDF from a local path or download it from a URL into the downloads directory.
 
@@ -47,25 +47,28 @@ async def load_pdf(request: PDFRequest):
         raise HTTPException(status_code=400, detail="A JSON body with a non-empty 'url' field is required")
 
     parsed = urlparse(url)
-    if parsed.scheme in ("http", "https"):
-        # Ensure download directory exists
-        pathlib.Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
+    if parsed.scheme not in ("http", "https"):
+        # Non-HTTP input: assume local path or other scheme
+        return {"message": f"PDF loaded from {url}"}
 
-        # Derive a filename from the URL path
-        filename = os.path.basename(parsed.path) or "downloaded.pdf"
-        # Overwrite existing files if present (user requested behavior)
-        dest_path = os.path.join(DOWNLOAD_DIR, filename)
-        existed = os.path.exists(dest_path)
+    # Ensure download directory exists
+    pathlib.Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
 
-        try:
-            await _download_file(url, dest_path)
-        except Exception as e:
-            raise HTTPException(status_code=502, detail=f"Failed to download file: {e}")
+    # Derive a filename from the URL path
+    filename = os.path.basename(parsed.path)
+    if not filename:
+        raise HTTPException(status_code=400, detail="URL must have a valid filename in the path")
 
-        return {"message": ("PDF downloaded and overwritten at" if existed else "PDF downloaded and saved to") + f" {dest_path}", "path": dest_path, "overwritten": existed}
+    # Overwrite existing files if present (user requested behavior)
+    dest_path = os.path.join(DOWNLOAD_DIR, filename)
+    existed = os.path.exists(dest_path)
 
-    # Non-HTTP input: assume local path or other scheme
-    return {"message": f"PDF loaded from {url}"}
+    try:
+        await _download_file(url, dest_path)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to download file: {e}")
+
+    return {"message": ("PDF downloaded and overwritten at" if existed else "PDF downloaded and saved to") + f" {dest_path}", "path": dest_path, "overwritten": existed}
 
 
 @router.post("/upload", summary="Upload a PDF file", description="Upload a PDF via multipart/form-data and save it into the temp downloads directory.")
