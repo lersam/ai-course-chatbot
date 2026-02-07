@@ -1,4 +1,4 @@
-import sqlite3
+import aiosqlite
 
 from typing import Optional
 
@@ -21,37 +21,24 @@ def sqlite_path_from_backend(backend: str | None) -> Optional[str]:
 
     return None
 
-async def get_celery_tasks_status() -> list[dict[str, str]]| None:
+async def get_celery_tasks_status() -> list[dict[str, str]]:
     backend = getattr(celery.conf, "result_backend", None)
     db_path = sqlite_path_from_backend(backend)
 
     if not db_path:
         return None
 
-    conn = sqlite3.connect(db_path)
-
-    try:
-        tasks = []
-        
-        cur = conn.cursor()
-        cur.execute("SELECT task_id, status, traceback, date_done FROM celery_taskmeta")
-        rows = cur.fetchall()
-        for task_id, status, traceback, date_done in rows:
-            tasks.append({
-                "task_id": task_id,
-                "status": status,
-                "date_done": date_done,
-                "traceback": traceback
-            })
+    tasks = []
+    async with aiosqlite.connect(db_path) as db:
+        async with db.execute("SELECT task_id, status, traceback, date_done FROM celery_taskmeta") as cursor:
+            async for task_id, status, traceback, date_done in cursor:
+                tasks.append({
+                    "task_id": task_id,
+                    "status": status,
+                    "date_done": date_done,
+                    "traceback": traceback
+                })
         return tasks
-    except Exception as e:
-        print(f"Error accessing Celery result backend: {e}")
-        return None
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
 
 async def get_celery_task_status(task_id: str) -> dict | None:
     backend = getattr(celery.conf, "result_backend", None)
@@ -59,28 +46,17 @@ async def get_celery_task_status(task_id: str) -> dict | None:
 
     if not db_path:
         return None
+    
+    async with aiosqlite.connect(db_path) as db:
+        async with db.execute("SELECT task_id, status, traceback, date_done FROM celery_taskmeta WHERE task_id = ?", (task_id,)) as cursor:
+            sql_result = await cursor.fetchone()
+            if sql_result is None:
+                return None
 
-    conn = sqlite3.connect(db_path)
-
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT task_id, status, traceback, date_done FROM celery_taskmeta WHERE task_id = ?", (task_id,))
-        sql_result = cur.fetchone()
-        if sql_result is None:
-            return None
-
-        task_id, status, traceback, date_done = sql_result
-        return {
-                "task_id": task_id,
-                "status": status,
-                "date_done": date_done,
-                "traceback": traceback
-            }
-    except Exception as e:
-        print(f"Error accessing Celery result backend: {e}")
-        return None
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
+            task_id, status, traceback, date_done = sql_result
+            return {
+                    "task_id": task_id,
+                    "status": status,
+                    "date_done": date_done,
+                    "traceback": traceback
+                }
