@@ -1,3 +1,6 @@
+# Numerical
+numpy
+
 # AI/ML Libraries
 langchain==0.3.27
 langchain-community==0.3.27
@@ -7,17 +10,21 @@ langchain-ollama
 # Ollama client (optional runtime for Ollama server)
 ollama==0.6.1
 
-# Numerical
-numpy==1.26.4
-
 # PDF Processing
 pypdf==6.6.2
 
 # Vector Store
 chromadb==1.4.1
 
-# Utilities
-python-dotenv==1.2.1
+
+# server
+uvicorn
+fastapi
+python-multipart
+celery
+kombu-sqlalchemy
+SQLAlchemy
+aiosqlite==0.22.1
 
 # Testing
 pytest
