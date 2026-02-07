@@ -14,7 +14,7 @@ A simple Retrieval-Augmented Generation (RAG) chatbot that loads PDF files, stor
 
 Before running the application, ensure you have:
 
-1. **Python 3.8+** installed
+1. **Python 3.9+** installed
 2. **Ollama** installed and running locally
    - Install from: https://ollama.ai
    - Pull required models:
@@ -112,6 +112,45 @@ If you change the broker/result backend via `CELERY_BROKER_URL` or
 `db+sqlite:///...` respectively so the code and status endpoint continue to
 work with the SQLite fallback.
 
+### Monitoring Celery tasks
+
+This project exposes simple monitoring endpoints and a DB fallback for
+observability when using the SQLite result backend.
+
+-- `GET /monitoring/` — Returns all tasks discovered via the SQLite result
+   backend (reads the `celery_taskmeta` table). Useful when Celery's
+   remote-control `inspect` returns no results (SQL transport limitation).
+-- `GET /monitoring/celery-task` — Returns only currently running tasks (statuses
+   like `RUNNING`, `STARTED`, or `ACTIVE`) as `CeleryTaskStatus` models.
+
+Example curl calls:
+
+```bash
+curl http://localhost:8000/monitoring/
+curl http://localhost:8000/monitoring/celery-task?celery_task=<task_id>
+```
+
+Inspect the SQLite result DB directly (useful for debugging):
+
+```bash
+# print configured result backend
+python -c "from ai_course_chatbot.worker import celery; print(celery.conf.result_backend)"
+
+# open DB (example path: ./celery_results.sqlite)
+sqlite3 ./celery_results.sqlite
+.tables
+SELECT task_id, status, date_done, traceback FROM celery_taskmeta ORDER BY date_done DESC;
+.exit
+```
+
+Notes:
+- The `update_vector_store` task sets its Celery state to `RUNNING` at start
+   (best-effort). The status endpoints and DB will reflect that while the
+   task is executing.
+- Ensure the system `sqlite3` binary and Python packages `kombu-sqlalchemy`
+   and `SQLAlchemy` are installed so the SQL transport and result backend
+   function correctly.
+
 ### Force Reload
 
 Force reload PDFs even if vector store exists:
@@ -136,17 +175,94 @@ python main.py --pdf document.pdf --reload
 5. **Query Processing**: User questions are embedded and matched against stored documents
 6. **Answer Generation**: Relevant context is retrieved and passed to the LLM for answer generation
 
+## Architecture
+
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        User Interface                           │
+│                  (setup_vector_store.py)                        │
+│                    Command Line Interface                       │
+└───────────────────────────┬─────────────────────────────────────┘
+            │
+            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      RAG Chatbot Layer                          │
+│                      (rag_chatbot.py)                           │
+│  ┌──────────────────┐          ┌──────────────────┐             │
+│  │  Query Handler   │◄────────►│   Ollama LLM     │             │
+│  │  RetrievalQA     │          │   (llama2)       │             │
+│  └─────────┬────────┘          └──────────────────┘             │
+└────────────┼────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Vector Store Layer                           │
+│                    (vector_store.py)                            │
+│  ┌────────────────────────────────────────────────────┐         │
+│  │             ChromaDB Vector Database               │         │
+│  │  ┌──────────────┐        ┌──────────────────┐      │         │
+│  │  │  Embeddings  │◄──────►│ Similarity Search│      │         │
+│  │  │   Storage    │        │    & Retrieval   │      │         │
+│  │  └──────────────┘        └──────────────────┘      │         │
+│  └────────────────────────────────────────────────────┘         │
+└────────────┬────────────────────────────────────────────────────┘
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│                  Document Processing Layer                     │
+│                     (pdf_loader.py)                            │
+│  ┌──────────────┐         ┌──────────────────┐                 │
+│  │  PDF Loader  │────────►│  Text Splitter   │                 │
+│  │  (PyPDF)     │         │  (Chunking)      │                 │
+│  └──────────────┘         └──────────────────┘                 │
+└────────────┬───────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         Data Source                             │
+│                       PDF Documents                             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+```
+PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
+                   ▲
+                   │
+                Ollama Embeddings
+               (nomic-embed-text)
+```
+
+Notes:
+- The helper function `setup_vector_store(pdf_paths)` accepts explicit PDF paths and loads those PDFs into a newly-created `VectorStore`. It does not auto-detect or load an existing vector store on disk.
+- If no PDFs are provided or no documents are extracted, the function will return None so ingestion remains deterministic.
+
+### Components
+
+- **PDF Loader (`pdf_loader.py`)**: loads and chunks PDFs (default chunk size 1000, overlap 200).
+- **Vector Store (`vector_store.py`)**: manages embeddings and stores them in ChromaDB (embedding model: `nomic-embed-text`).
+- **RAG Chatbot (`rag_chatbot.py`)**: handles queries, retrieval, and LLM generation using Ollama.
+- **Worker (`worker.py`)**: Celery tasks for background processing (SQLite SQLAlchemy transport/result backend).
+- **Monitoring**: FastAPI endpoints `/monitoring/` and `/monitoring/celery-task` expose task info using an SQLite DB fallback when inspect returns empty.
+
 ## Project Structure
 
 ```
 ai-course-chatbot/
-├── main.py              # Main application entry point
-├── pdf_loader.py        # PDF loading and text chunking
-├── vector_store.py      # Vector database management
-├── rag_chatbot.py       # RAG chatbot implementation
+├── ai_course_chatbot/   # Python package
+│   ├── main.py          # Main application entry point
+│   ├── setup_vector_store.py
+│   ├── worker.py
+│   ├── ai_modules/      # pdf_loader, vector_store, rag_chatbot, etc.
+│   ├── models/
+│   └── routers/
+├── tests/               # Test suite
 ├── requirements.txt     # Python dependencies
-├── README.md           # This file
-└── chroma_db/          # Vector database storage (created automatically)
+├── README.md            # This file
+└── chroma_db/           # Vector database storage (created automatically)
 ```
 
 ## Example Interaction
@@ -226,7 +342,7 @@ backend, ensure `CELERY_BROKER_URL` and `CELERY_RESULT_BACKEND` remain set to
 SQLite URLs (for example `sqla+sqlite:///./celerydb.sqlite` and
 `db+sqlite:///./celery_results.sqlite`). Note: the SQL transport may not
 support control broadcasts reliably, which can make `inspect` return empty —
-the `/aupload/status` endpoint has a SQLite fallback that reads `celery_taskmeta`.
+the `/monitoring/` endpoint has a SQLite fallback that reads `celery_taskmeta`.
 
 If the issue persists, consider moving tasks to a dedicated `tasks.py` module
 and using `@shared_task` or adjusting `celery.conf.imports` to include the

@@ -6,11 +6,11 @@ from fastapi import FastAPI
 from starlette import status
 
 from ai_course_chatbot.routers import pdf_router
-from ai_course_chatbot.routers import upload_status
+from ai_course_chatbot.routers import monitoring
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     _app.include_router(pdf_router.router)
-    _app.include_router(upload_status.router)
+    _app.include_router(monitoring.router)
 
     yield
 
