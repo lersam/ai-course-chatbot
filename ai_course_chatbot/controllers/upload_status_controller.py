@@ -53,7 +53,7 @@ async def get_celery_tasks_status() -> list[dict[str, str]]| None:
         except Exception:
             pass
 
-async def get_celery_task_status(task_id: str) -> dict:
+async def get_celery_task_status(task_id: str) -> dict | None:
     backend = getattr(celery.conf, "result_backend", None)
     db_path = sqlite_path_from_backend(backend)
 
