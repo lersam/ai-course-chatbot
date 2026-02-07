@@ -14,7 +14,7 @@ A simple Retrieval-Augmented Generation (RAG) chatbot that loads PDF files, stor
 
 Before running the application, ensure you have:
 
-1. **Python 3.9+** installed
+1. **Python 3.10+** installed
 2. **Ollama** installed and running locally
    - Install from: https://ollama.ai
    - Pull required models:
