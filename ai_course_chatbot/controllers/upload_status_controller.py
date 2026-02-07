@@ -21,7 +21,7 @@ def sqlite_path_from_backend(backend: str | None) -> Optional[str]:
 
     return None
 
-async def get_celery_tasks_status() -> list[dict[str, str]]:
+async def get_celery_tasks_status() -> list[dict[str, str]]| None:
     backend = getattr(celery.conf, "result_backend", None)
     db_path = sqlite_path_from_backend(backend)
 

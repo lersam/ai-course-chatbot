@@ -90,7 +90,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         await save_upload_file_bytes(data, dest_path)
         await file.close()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {filename}")
 
     task = update_vector_store.delay([dest_path])
     return {

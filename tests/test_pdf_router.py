@@ -20,7 +20,7 @@ def test_load_pdf_download_and_overwrite(tmp_path, monkeypatch):
         # Create file content to simulate a downloaded PDF
         Path(dest_path).write_bytes(b"%PDF-1.4\n%fakepdf")
 
-    monkeypatch.setattr(pdf_router, "_download_file", fake_download)
+    monkeypatch.setattr(pdf_router, "download_file", fake_download)
 
     url = "https://example.com/test.pdf"
 
