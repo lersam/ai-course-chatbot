@@ -1,36 +1,17 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
 import os
 import pathlib
-import asyncio
-import urllib.request
-import tempfile
+
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from urllib.parse import urlparse
 
 from ai_course_chatbot.models.pdf_request import PDFRequest
 from ai_course_chatbot.worker import update_vector_store
+from ai_course_chatbot.controllers import download_file, save_upload_file_bytes, DOWNLOAD_DIR
 
 router = APIRouter(
     prefix="/pdf",
     tags=["PDF Management"]
 )
-
-# Use the system default temporary directory
-DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), "ai-course-chatbot", "downloads")
-
-
-async def _download_file(url: str, dest_path: str):
-    """Download a file using urllib in a thread to avoid blocking the event loop."""
-    def _sync_download():
-        urllib.request.urlretrieve(url, dest_path)
-    await asyncio.to_thread(_sync_download)
-
-
-async def _save_upload_file_bytes(data: bytes, dest_path: str):
-    """Write bytes to disk in a thread to avoid blocking."""
-    def _sync_write(d, p):
-        with open(p, "wb") as f:
-            f.write(d)
-    await asyncio.to_thread(_sync_write, data, dest_path)
 
 
 @router.post("/load", summary="Download PDF document", description="Download a PDF from a URL and save it into the temp downloads directory.")
@@ -65,7 +46,7 @@ async def load_pdf(request: PDFRequest):
     existed = os.path.exists(dest_path)
 
     try:
-        await _download_file(url, dest_path)
+        await download_file(url, dest_path)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to download file: {e}")
 
@@ -105,7 +86,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     try:
         data = await file.read()
-        await _save_upload_file_bytes(data, dest_path)
+        await save_upload_file_bytes(data, dest_path)
         await file.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {e}")
