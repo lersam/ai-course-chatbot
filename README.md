@@ -68,16 +68,16 @@ Use a different Ollama model:
 python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model mistral
 ```
 
-### HTTP API example: POST /pdf/load
+### HTTP API example: POST /pdf/download
 
-Instead of using the CLI, you can call the FastAPI endpoint directly to load a PDF (this example posts a JSON body). The `topics` field accepts one of the Topics enum values (for example `GameProgrammingBooks`).
+Instead of using the CLI, you can call the FastAPI endpoint directly to download and queue a PDF for processing (this example posts a JSON body). The `topics` field accepts one of the Topics enum values (for example `GameProgrammingBooks`).
 
 Curl example:
 
 ```bash
-curl -X POST "http://localhost:8000/pdf/load" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://inventwithpython.com/makinggames.pdf", "topics": "GameProgrammingBooks"}'
+curl -X POST "http://localhost:8000/pdf/download" \
+   -H "Content-Type: application/json" \
+   -d '{"url": "https://inventwithpython.com/makinggames.pdf"}'
 ```
 
 Python requests example:
@@ -86,11 +86,11 @@ Python requests example:
 import requests
 
 resp = requests.post(
-    "http://localhost:8000/pdf/load",
-    json={
-        "url": "https://inventwithpython.com/makinggames.pdf",
-        "topics": "GameProgrammingBooks"
-    }
+      "http://localhost:8000/pdf/download",
+      json={
+            "url": "https://inventwithpython.com/makinggames.pdf",
+            "topics": "GameProgrammingBooks"
+      }
 )
 print(resp.json())
 ```
