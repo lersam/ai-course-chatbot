@@ -95,6 +95,20 @@ resp = requests.post(
 print(resp.json())
 ```
 
+### Running Celery
+
+Run a Celery worker for background tasks (ensure a message broker like Redis or RabbitMQ is running):
+
+```bash
+celery -A ai_course_chatbot.worker.celery worker --loglevel=info
+```
+
+If using Redis as the broker, start it first (example):
+
+```bash
+redis-server
+```
+
 ### Force Reload
 
 Force reload PDFs even if vector store exists:

@@ -7,7 +7,7 @@ import argparse
 
 from ai_course_chatbot.ai_modules import VectorStore, PDFLoader
 
-def setup_vector_store(pdf_paths):
+def setup_vector_store(pdf_paths: list[str]) -> VectorStore | None:
     """
     Load PDF files into a new VectorStore and return it.
 

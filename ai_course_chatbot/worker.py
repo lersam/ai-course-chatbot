@@ -1,7 +1,9 @@
 import os
-import time
+
 
 from celery import Celery
+
+from ai_course_chatbot import setup_vector_store
 
 
 celery = Celery(__name__)
@@ -16,8 +18,10 @@ celery.conf.result_backend = os.environ.get(
 )
 
 @celery.task
-def long_running_task(duration):
-    print(f"Starting long-running task for {duration} seconds...")
-    time.sleep(duration)
-    print("Task completed!")
-    return f"Task completed after {duration} seconds"
+def update_vector_store(pdf_paths: list[str]):
+    print(f"Starting vector store update for {pdf_paths}...")
+    vector_store = setup_vector_store(pdf_paths)
+    if vector_store is not None:
+        print("Vector store updated successfully.")
+    else:
+        print("Vector store update failed or no documents were loaded.")

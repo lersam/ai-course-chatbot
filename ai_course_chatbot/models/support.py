@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class Topics(Enum):
+    GeneralProgrammingBooks = "GeneralProgrammingBooks"
     GameProgrammingBooks = "GameProgrammingBooks"
     NetworkProgrammingBooks = "NetworkProgrammingBooks"
     GuiBooks = "GuiBooks"

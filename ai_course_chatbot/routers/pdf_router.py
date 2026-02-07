@@ -7,6 +7,7 @@ import tempfile
 from urllib.parse import urlparse
 
 from ai_course_chatbot.models.pdf_request import PDFRequest
+from ai_course_chatbot.worker import update_vector_store
 
 router = APIRouter(
     prefix="/pdf",
@@ -68,7 +69,13 @@ async def load_pdf(request: PDFRequest):
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to download file: {e}")
 
-    return {"message": ("PDF downloaded and overwritten at" if existed else "PDF downloaded and saved to") + f" {dest_path}", "path": dest_path, "overwritten": existed}
+    task = update_vector_store.delay([dest_path])
+    return {
+        "message": ("PDF downloaded and overwritten at" if existed else "PDF downloaded and saved to") + f" {dest_path}", 
+        "path": dest_path,
+        "overwritten": existed,
+        "vector_store_update_task_id": task.id
+        }
 
 
 @router.post("/upload", summary="Upload a PDF file", description="Upload a PDF via multipart/form-data and save it into the temp downloads directory.")
@@ -103,4 +110,11 @@ async def upload_pdf(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {e}")
 
-    return {"message": ("Uploaded PDF overwritten at" if existed else "Uploaded PDF saved to") + f" {dest_path}", "path": dest_path, "overwritten": existed}
+    task = update_vector_store.delay([dest_path])
+    return {
+        "message": 
+            ("Uploaded PDF overwritten at" if existed else "Uploaded PDF saved to") + f" {dest_path}",
+            "path": dest_path,
+            "overwritten": existed,
+            "vector_store_update_task_id": task.id
+            }
