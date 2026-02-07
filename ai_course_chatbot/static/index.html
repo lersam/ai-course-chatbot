@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Course Chatbot</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Course Chatbot</h1>
+            <p class="subtitle">Ask questions about your uploaded documents</p>
+            <div id="status-indicator" class="status-checking">
+                <span class="status-dot"></span>
+                <span id="status-text">Checking status...</span>
+            </div>
+        </header>
+
+        <div class="chat-container">
+            <div id="chat-messages" class="chat-messages">
+                <div class="message bot-message welcome-message">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <p>Welcome! I'm your AI assistant. I can help you find information from the uploaded documents.</p>
+                        <p>Ask me anything!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <form id="chat-form">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="user-input" 
+                            placeholder="Type your question here..." 
+                            rows="1"
+                            required></textarea>
+                        <button type="submit" id="send-button" title="Send message">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+                <div class="input-options">
+                    <label>
+                        <input type="checkbox" id="show-sources" checked>
+                        Show sources
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by RAG (Retrieval-Augmented Generation) with Ollama</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>
