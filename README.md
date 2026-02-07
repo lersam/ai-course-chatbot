@@ -7,8 +7,10 @@ A simple Retrieval-Augmented Generation (RAG) chatbot that loads PDF files, stor
 - 📄 **PDF Loading**: Automatically loads and processes PDF documents
 - 🔍 **Vector Storage**: Stores document embeddings in ChromaDB for efficient retrieval
 - 🤖 **AI-Powered Q&A**: Uses Ollama LLMs for natural language responses
-- 💬 **Interactive Chat**: Command-line interface for asking questions
+- 💬 **Interactive Chat**: Both web-based UI and command-line interface for asking questions
+- 🌐 **Web Interface**: Modern, responsive chat interface with real-time messaging
 - 📚 **Source Citations**: Shows source documents and page numbers
+- 🔄 **RESTful API**: FastAPI endpoints for chat, PDF upload, and monitoring
 
 ## Prerequisites
 
@@ -44,7 +46,43 @@ Before running the application, ensure you have:
 
 ## Usage
 
-### Basic Usage
+### Web Interface (Recommended)
+
+1. Start the FastAPI server:
+   ```bash
+   uvicorn ai_course_chatbot.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+2. Open your browser and navigate to:
+   ```
+   http://localhost:8000
+   ```
+
+3. You'll see a modern chat interface where you can:
+   - Ask questions about your uploaded documents
+   - View source citations for answers
+   - Toggle source display on/off
+   - Get real-time responses
+
+4. Upload PDFs using the API endpoints (see below) or use the existing CLI tools
+
+### API Endpoints
+
+The application provides several REST endpoints:
+
+- **`GET /`** - Web chat interface
+- **`POST /chat/`** - Send a chat message
+  ```bash
+  curl -X POST "http://localhost:8000/chat/" \
+    -H "Content-Type: application/json" \
+    -d '{"message": "What is this document about?", "show_sources": true}'
+  ```
+- **`GET /chat/status`** - Check chatbot status
+- **`POST /pdf/download`** - Download and process a PDF from URL
+- **`POST /pdf/upload`** - Upload a PDF file
+- **`GET /monitoring/`** - View Celery task status
+
+### Basic Usage (CLI)
 
 Load a PDF and start chatting:
 
@@ -245,6 +283,8 @@ Notes:
 - **PDF Loader (`pdf_loader.py`)**: loads and chunks PDFs (default chunk size 1000, overlap 200).
 - **Vector Store (`vector_store.py`)**: manages embeddings and stores them in ChromaDB (embedding model: `nomic-embed-text`).
 - **RAG Chatbot (`rag_chatbot.py`)**: handles queries, retrieval, and LLM generation using Ollama.
+- **Chat Router (`chat_router.py`)**: FastAPI endpoints for web-based chat interface.
+- **Web Interface (`static/`)**: HTML, CSS, and JavaScript for the chat UI.
 - **Worker (`worker.py`)**: Celery tasks for background processing (SQLite SQLAlchemy transport/result backend).
 - **Monitoring**: FastAPI endpoints `/monitoring/` and `/monitoring/celery-task` expose task info using an SQLite DB fallback when inspect returns empty.
 
@@ -253,12 +293,16 @@ Notes:
 ```
 ai-course-chatbot/
 ├── ai_course_chatbot/   # Python package
-│   ├── main.py          # Main application entry point
+│   ├── main.py          # Main application entry point (FastAPI)
 │   ├── setup_vector_store.py
 │   ├── worker.py
 │   ├── ai_modules/      # pdf_loader, vector_store, rag_chatbot, etc.
-│   ├── models/
-│   └── routers/
+│   ├── models/          # Pydantic models for requests/responses
+│   ├── routers/         # FastAPI routers (chat, pdf, monitoring)
+│   └── static/          # Frontend assets (HTML, CSS, JS)
+│       ├── index.html   # Chat interface
+│       ├── css/
+│       └── js/
 ├── tests/               # Test suite
 ├── requirements.txt     # Python dependencies
 ├── README.md            # This file
@@ -266,6 +310,23 @@ ai-course-chatbot/
 ```
 
 ## Example Interaction
+
+### Web Interface
+
+After starting the server and navigating to `http://localhost:8000`, you'll see a modern chat interface:
+
+![AI Course Chatbot Interface](https://github.com/user-attachments/assets/c12a7dcc-d79d-448b-9bfa-b180854a395f)
+
+The interface features:
+- **Real-time chat**: Send messages and receive instant responses
+- **Source citations**: Toggle to show/hide document sources
+- **Status indicator**: Shows when the chatbot is ready
+- **Responsive design**: Works on desktop and mobile devices
+- **Chat history**: Scroll through previous messages
+
+![Chat Conversation Example](https://github.com/user-attachments/assets/18f65661-3286-42ff-9d21-7a634005a673)
+
+### CLI Interface
 
 ```
 ============================================================
