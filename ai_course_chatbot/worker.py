@@ -9,6 +9,7 @@ from ai_course_chatbot.setup_vector_store import setup_vector_store
 # Ensure the Celery app has a stable project name and imports this module
 # so tasks defined here are registered when the worker starts.
 celery = Celery("ai_course_chatbot", include=["ai_course_chatbot.worker"])
+
 # Use SQLAlchemy transport with SQLite by default. Install `kombu-sqlalchemy` and `SQLAlchemy`.
 # Broker (kombu SQLAlchemy transport) example: sqla+sqlite:///./celerydb.sqlite
 celery.conf.broker_url = os.environ.get(

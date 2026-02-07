@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException
-from typing import List, Dict
+from typing import List
+from starlette import status
 
+from ai_course_chatbot.controllers import get_celery_tasks_status
+from ai_course_chatbot.models.celery_task_status import CeleryTaskStatus
 from ai_course_chatbot.worker import celery
 
 router = APIRouter(
@@ -9,7 +12,7 @@ router = APIRouter(
 )
 
 
-@router.get("/status", response_model=Dict[str, List[Dict[str, str]]])
+@router.get("/status", response_model=List[CeleryTaskStatus], status_code=status.HTTP_200_OK)
 async def status():
     """Return Celery tasks currently known to workers with their id and status.
 
@@ -17,42 +20,8 @@ async def status():
     and returns a JSON object with a `tasks` list where each item contains
     `id`, `status`, `worker`, and `name`.
     """
-    try:
-        insp = celery.control.inspect()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to contact Celery control API: {e}")
 
-    tasks = []
-
-    active = insp.active() or {}
-    for worker, items in active.items():
-        for item in items:
-            tasks.append({
-                "id": item.get("id"),
-                "status": "active",
-                "worker": worker,
-                "name": item.get("name"),
-            })
-
-    reserved = insp.reserved() or {}
-    for worker, items in reserved.items():
-        for item in items:
-            tasks.append({
-                "id": item.get("id"),
-                "status": "reserved",
-                "worker": worker,
-                "name": item.get("name"),
-            })
-
-    scheduled = insp.scheduled() or {}
-    for worker, items in scheduled.items():
-        for item in items:
-            req = item.get("request") or item
-            tasks.append({
-                "id": req.get("id"),
-                "status": "scheduled",
-                "worker": worker,
-                "name": req.get("name"),
-            })
-
-    return {"tasks": tasks}
+    celery_tasks = await get_celery_tasks_status()
+    if celery_tasks is None:
+        raise HTTPException(status_code=500, detail="Unsupported Celery result_backend URL")
+    return celery_tasks

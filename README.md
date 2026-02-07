@@ -95,19 +95,22 @@ resp = requests.post(
 print(resp.json())
 ```
 
-### Running Celery
+### Running Celery (SQLite only)
 
-Run a Celery worker for background tasks (ensure a message broker like Redis or RabbitMQ is running):
+This project uses the SQLAlchemy/SQLite transport by default for both the broker
+and the result backend. Ensure the system `sqlite3` CLI and the Python
+packages in `requirements.txt` are installed (`kombu-sqlalchemy`, `SQLAlchemy`).
+
+Start the Celery worker from the project root:
 
 ```bash
 celery -A ai_course_chatbot.worker.celery worker --loglevel=info
 ```
 
-If using Redis as the broker, start it first (example):
-
-```bash
-redis-server
-```
+If you change the broker/result backend via `CELERY_BROKER_URL` or
+`CELERY_RESULT_BACKEND`, make sure they point to `sqla+sqlite:///...` or
+`db+sqlite:///...` respectively so the code and status endpoint continue to
+work with the SQLite fallback.
 
 ### Force Reload
 
@@ -218,9 +221,16 @@ celery -A ai_course_chatbot.worker.celery inspect registered
 python -c "import ai_course_chatbot.worker as w; print([k for k in w.celery.tasks.keys() if 'update_vector_store' in k])"
 ```
 
-- **Broker / backend**: verify your broker is reachable (e.g., `redis-server` running) and `CELERY_BROKER_URL` is set correctly if not using the default SQL transport.
+-- **Broker / backend**: this project defaults to SQLite. If you changed the
+backend, ensure `CELERY_BROKER_URL` and `CELERY_RESULT_BACKEND` remain set to
+SQLite URLs (for example `sqla+sqlite:///./celerydb.sqlite` and
+`db+sqlite:///./celery_results.sqlite`). Note: the SQL transport may not
+support control broadcasts reliably, which can make `inspect` return empty —
+the `/aupload/status` endpoint has a SQLite fallback that reads `celery_taskmeta`.
 
-If the issue persists, consider moving tasks to a dedicated `tasks.py` module and using `@shared_task` or adjusting `celery.conf.imports` to include the module path.
+If the issue persists, consider moving tasks to a dedicated `tasks.py` module
+and using `@shared_task` or adjusting `celery.conf.imports` to include the
+module path.
 
 ## License
 

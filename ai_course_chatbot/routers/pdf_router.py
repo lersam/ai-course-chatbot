@@ -3,6 +3,7 @@ import pathlib
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from urllib.parse import urlparse
+from starlette import status
 
 from ai_course_chatbot.models.pdf_request import PDFRequest
 from ai_course_chatbot.worker import update_vector_store
@@ -14,8 +15,8 @@ router = APIRouter(
 )
 
 
-@router.post("/load", summary="Download PDF document", description="Download a PDF from a URL and save it into the temp downloads directory.")
-async def load_pdf(request: PDFRequest):
+@router.post("/download", summary="Download PDF document", description="Download a PDF from a URL and save it into the temp downloads directory.", status_code=status.HTTP_200_OK)
+async def download_pdf(request: PDFRequest):
     """Load a PDF from a local path or download it from a URL into the downloads directory.
 
     The request must be a JSON object like: {"url": "https://example.com/file.pdf"}.
@@ -59,7 +60,7 @@ async def load_pdf(request: PDFRequest):
         }
 
 
-@router.post("/upload", summary="Upload a PDF file", description="Upload a PDF via multipart/form-data and save it into the temp downloads directory.")
+@router.post("/upload", summary="Upload a PDF file", description="Upload a PDF via multipart/form-data and save it into the temp downloads directory.", status_code=status.HTTP_200_OK)
 async def upload_pdf(file: UploadFile = File(...)):
     """Accept a multipart file upload and save it into the system temp downloads directory.
 
