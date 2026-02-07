@@ -2,12 +2,12 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from starlette import status
 
-from ai_course_chatbot.controllers import get_celery_tasks_status
+from ai_course_chatbot.controllers import get_celery_tasks_status, get_celery_task_status
 from ai_course_chatbot.models.celery_task_status import CeleryTaskStatus
 from ai_course_chatbot.worker import celery
 
 router = APIRouter(
-    prefix="/aupload",
+    prefix="/upload",
     tags=["PDF Management"]
 )
 
@@ -24,4 +24,18 @@ async def status():
     celery_tasks = await get_celery_tasks_status()
     if celery_tasks is None:
         raise HTTPException(status_code=500, detail="Unsupported Celery result_backend URL")
+    return celery_tasks
+
+
+@router.get("/running", response_model=CeleryTaskStatus)
+async def running(celery_task: str = None):
+    """Return currently running Celery tasks (filtered)."""
+    if not celery_task:
+        raise HTTPException(status_code=400, detail="Missing required query parameter: celery_task")
+    
+    celery_tasks = await get_celery_task_status(celery_task)
+    if celery_tasks is None:
+        raise HTTPException(status_code=500, detail="Unsupported Celery result_backend URL")
+
+
     return celery_tasks
