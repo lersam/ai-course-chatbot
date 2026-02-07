@@ -49,7 +49,7 @@ async def download_pdf(request: PDFRequest):
     try:
         await download_file(url, dest_path)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Failed to download file: {e}")
+        raise HTTPException(status_code=502, detail=f"Failed to download file: {url}")
 
     task = update_vector_store.delay([dest_path])
     return {
