@@ -2,7 +2,6 @@ import os
 import tempfile
 import asyncio
 import urllib.request
-import tempfile
 
 # Use the system default temporary directory
 DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), "ai-course-chatbot", "downloads")
