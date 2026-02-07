@@ -9,12 +9,11 @@ from ai_course_chatbot.routers import pdf_router
 from ai_course_chatbot.routers import monitoring
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    _app.include_router(pdf_router.router)
-    _app.include_router(monitoring.router)
-
     yield
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(pdf_router.router)
+app.include_router(monitoring.router)
 
 
 @app.get("/healthy", status_code=status.HTTP_200_OK, include_in_schema=False)
