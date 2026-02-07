@@ -192,6 +192,36 @@ Goodbye!
 ### Import Errors
 - Reinstall dependencies: `pip install -r requirements.txt --upgrade`
 
+### Celery: Unregistered task
+
+If you see an error like "Received unregistered task" for `ai_course_chatbot.worker.update_vector_store`, try the following:
+
+- **Check worker startup**: start the worker with the same app path used in the project:
+
+```bash
+celery -A ai_course_chatbot.worker.celery worker --loglevel=info
+```
+
+- **Inspect registered tasks** (run while the worker is running):
+
+```bash
+celery -A ai_course_chatbot.worker.celery inspect registered
+```
+
+- **Confirm module import**: ensure the worker module is imported by the Celery app. The project already sets `celery.conf.imports = ['ai_course_chatbot.worker']` in `ai_course_chatbot/worker.py`, but if you're structuring tasks elsewhere, add the module to `imports` or use `include=` when creating the `Celery` instance.
+
+- **Check PYTHONPATH / working directory**: run the worker from the repository root and ensure your virtualenv is active so `ai_course_chatbot` is importable.
+
+- **Quick Python check**: run this to confirm the task is discoverable by import (no worker required):
+
+```bash
+python -c "import ai_course_chatbot.worker as w; print([k for k in w.celery.tasks.keys() if 'update_vector_store' in k])"
+```
+
+- **Broker / backend**: verify your broker is reachable (e.g., `redis-server` running) and `CELERY_BROKER_URL` is set correctly if not using the default SQL transport.
+
+If the issue persists, consider moving tasks to a dedicated `tasks.py` module and using `@shared_task` or adjusting `celery.conf.imports` to include the module path.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

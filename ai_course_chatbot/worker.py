@@ -3,10 +3,12 @@ import os
 
 from celery import Celery
 
-from ai_course_chatbot import setup_vector_store
+from ai_course_chatbot.setup_vector_store import setup_vector_store
 
 
-celery = Celery(__name__)
+# Ensure the Celery app has a stable project name and imports this module
+# so tasks defined here are registered when the worker starts.
+celery = Celery("ai_course_chatbot", include=["ai_course_chatbot.worker"])
 # Use SQLAlchemy transport with SQLite by default. Install `kombu-sqlalchemy` and `SQLAlchemy`.
 # Broker (kombu SQLAlchemy transport) example: sqla+sqlite:///./celerydb.sqlite
 celery.conf.broker_url = os.environ.get(
@@ -16,6 +18,9 @@ celery.conf.broker_url = os.environ.get(
 celery.conf.result_backend = os.environ.get(
 	"CELERY_RESULT_BACKEND", "db+sqlite:///./celery_results.sqlite"
 )
+
+# Also explicitly import this module so tasks are registered when workers start.
+celery.conf.imports = ["ai_course_chatbot.worker"]
 
 @celery.task
 def update_vector_store(pdf_paths: list[str]):

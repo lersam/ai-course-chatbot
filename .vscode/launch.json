@@ -9,6 +9,21 @@
             "type": "debugpy",
             "request": "launch",
             "module": "ai_course_chatbot.main"
+        },
+        {
+            "name": "Celery-Worker",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "celery",
+            "args": [
+                "-A",
+                "ai_course_chatbot.worker.celery",
+                "worker",
+                "-l",
+                "debug",
+                "-P",
+                "solo"
+            ]
         }
     ]
 }
