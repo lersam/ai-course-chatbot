@@ -35,7 +35,7 @@ async def celery_task(celery_task: str = None):
     
     celery_tasks = await get_celery_task_status(celery_task)
     if celery_tasks is None:
-        raise HTTPException(status_code=500, detail="Unsupported Celery result_backend URL")
+        raise HTTPException(status_code=404, detail="Celery task not found")
 
 
     return celery_tasks
