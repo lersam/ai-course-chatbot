@@ -24,6 +24,17 @@
                 "-P",
                 "solo"
             ]
+        },
+        {
+            "name": "SetupVectorStore",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "ai_course_chatbot.setup_vector_store",
+            "args": [
+                "--pdf",
+                "data/tutorial_edit.pdf",
+                "--reload"
+            ]
         }
     ]
 }

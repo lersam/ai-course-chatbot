@@ -29,7 +29,7 @@ def setup_vector_store(pdf_paths: list[str]) -> VectorStore | None:
     # Load PDFs
     print("Loading PDF files...")
     pdf_loader = PDFLoader()
-    documents = pdf_loader.load_multiple_pdfs(pdf_paths)
+    documents = pdf_loader.load_and_chunk_pdfs(pdf_paths)
 
     if not documents:
         print("No documents were loaded from the provided PDF paths.")

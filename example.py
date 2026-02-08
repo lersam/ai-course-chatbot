@@ -29,7 +29,7 @@ def example_usage():
     # 3. Load existing vector store or create new one
     if not vector_store.load_existing():
         print("Loading PDFs...")
-        documents = pdf_loader.load_multiple_pdfs(pdf_files)
+        documents = pdf_loader.load_and_chunk_pdfs(pdf_files)
         if documents:
             vector_store.add_documents(documents)
 

@@ -54,7 +54,7 @@ class PDFLoader:
         
         return chunks
     
-    def load_multiple_pdfs(self, pdf_paths: List[str]) -> List:
+    def load_and_chunk_pdfs(self, pdf_paths: List[str]) -> List:
         """
         Load multiple PDF files.
         
