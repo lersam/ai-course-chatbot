@@ -44,11 +44,11 @@ class RAGChatbot:
             input_variables=["context", "question"]
         )
 
-        # Create retrieval QA chain
+        # Create retrieval QA chain with optimized retriever (k=2 for faster processing)
         self.qa_chain = RetrievalQA.from_chain_type(
             llm=self.llm,
             chain_type="stuff",
-            retriever=self.vector_store.get_retriever(),
+            retriever=self.vector_store.get_retriever(k=2),
             return_source_documents=True,
             chain_type_kwargs={"prompt": self.prompt}
         )

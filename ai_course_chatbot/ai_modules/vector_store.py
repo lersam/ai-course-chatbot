@@ -98,12 +98,12 @@ class VectorStore:
         results = self.vectorstore.similarity_search(query, k=k)
         return results
 
-    def get_retriever(self, k: int = 4):
+    def get_retriever(self, k: int = 2):
         """
         Get a retriever for the vector store.
         
         Args:
-            k: Number of documents to retrieve
+            k: Number of documents to retrieve (default: 2 for optimal performance)
             
         Returns:
             Retriever object

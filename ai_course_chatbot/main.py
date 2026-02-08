@@ -17,6 +17,14 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Pre-warm chatbot on startup for faster first request
+    print("Initializing chatbot...")
+    try:
+        chat_router.get_chatbot()
+        print("Chatbot initialized successfully")
+    except Exception as e:
+        print(f"Warning: Could not pre-initialize chatbot: {e}")
+        print("Chatbot will be initialized on first request")
     yield
 
 app = FastAPI(lifespan=lifespan)
