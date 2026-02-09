@@ -14,7 +14,7 @@ class VectorStore:
 
     def __init__(self, collection_name: str = "pdf_documents",
                  persist_directory: str = "./chroma_db",
-                 embedding_model: str = "nomic-embed-text"):
+                 embedding_model: str = "qwen3-embedding"):
         """
         Initialize the vector store.
         
@@ -53,7 +53,8 @@ class VectorStore:
                 documents=documents,
                 embedding=self.embeddings,
                 collection_name=self.collection_name,
-                persist_directory=self.persist_directory
+                persist_directory=self.persist_directory,
+                collection_metadata={"source": "pdf_loader"}# TODO: Add more metadata if needed (e.g., original PDF name, chunk index, etc.
             )
         else:
             # Add to existing vector store

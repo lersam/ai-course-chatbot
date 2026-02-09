@@ -22,7 +22,7 @@ Before running the application, ensure you have:
    - Pull required models:
    ```bash
    ollama pull mistral-small
-   ollama pull nomic-embed-text
+   ollama pull qwen3-embedding
    ```
 
 ## Installation
@@ -202,7 +202,7 @@ python main.py --pdf document.pdf --reload
 
 - `--pdf`: Path(s) to PDF file(s) to load (required for first run)
 - `--model`: Ollama LLM model to use (default: mistral-small). You can also set the `OLLAMA_MODEL` env var.
-- `--embedding-model`: Ollama embedding model (default: nomic-embed-text)
+- `--embedding-model`: Ollama embedding model (default: qwen3-embedding)
 - `--reload`: Force reload PDFs into vector store
 
 ## How It Works
@@ -272,7 +272,7 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
                    ▲
                    │
                 Ollama Embeddings
-               (nomic-embed-text)
+               (qwen3-embedding)
 ```
 
 Notes:
@@ -282,7 +282,7 @@ Notes:
 ### Components
 
 - **PDF Loader (`pdf_loader.py`)**: loads and chunks PDFs (default chunk size 1000, overlap 200).
-- **Vector Store (`vector_store.py`)**: manages embeddings and stores them in ChromaDB (embedding model: `nomic-embed-text`).
+-- **Vector Store (`vector_store.py`)**: manages embeddings and stores them in ChromaDB (embedding model: `qwen3-embedding`).
 - **RAG Chatbot (`rag_chatbot.py`)**: handles queries, retrieval, and LLM generation using Ollama.
 - **Chat Router (`chat_router.py`)**: FastAPI endpoints for web-based chat interface.
 - **Web Interface (`static/`)**: HTML, CSS, and JavaScript for the chat UI.

@@ -12,7 +12,7 @@ This guide will help you get the AI RAG Chatbot up and running in minutes.
 
 ```bash
 ollama pull mistral-small
-ollama pull nomic-embed-text
+ollama pull qwen3-embedding
 ```
 
 Verify Ollama is running:

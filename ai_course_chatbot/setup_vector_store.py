@@ -47,8 +47,8 @@ def main():
     parser = argparse.ArgumentParser(description="AI RAG Chatbot - Chat with your PDF documents using Ollama")
     parser.add_argument("--pdf", nargs="+", help="Path(s) to PDF file(s) to load")
     parser.add_argument("--model", default="llama2", help="Ollama model to use (default: llama2)")
-    parser.add_argument("--embedding-model", default="nomic-embed-text",
-                        help="Ollama embedding model to use (default: nomic-embed-text)")
+    parser.add_argument("--embedding-model", default="qwen3-embedding",
+                        help="Ollama embedding model to use (default: qwen3-embedding)")
     parser.add_argument("--reload", action="store_true", help="Force reload PDFs even if vector store exists")
 
     args = parser.parse_args()

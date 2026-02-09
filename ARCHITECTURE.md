@@ -57,7 +57,7 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
                                            ▲
                                            │
                                     Ollama Embeddings
-                                   (nomic-embed-text)
+                                    (qwen3-embedding)
 ```
 
 Notes:
@@ -105,7 +105,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `similarity_search()`: Search for similar documents
   - `get_retriever()`: Get retriever for RAG
 - **Storage**: ChromaDB (persistent on disk)
-- **Embeddings**: Ollama nomic-embed-text
+-- **Embeddings**: Ollama qwen3-embedding
 
 ### RAG Chatbot (`rag_chatbot.py`)
 - **Purpose**: Handle user queries with RAG
@@ -128,7 +128,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
 - **Arguments**:
   - `--pdf`: PDF files to load (required to build a vector store)
   - `--model`: LLM model to use (default: mistral-small)
-  - `--embedding-model`: Embedding model (default: nomic-embed-text)
+  - `--embedding-model`: Embedding model (default: qwen3-embedding)
 
 Notes:
 - The previous `--reload`/auto-reload behavior was intentionally removed: re-loading or overwriting an existing collection must be handled explicitly by the user or by an enhanced helper if desired.
@@ -136,7 +136,7 @@ Notes:
 ## External Dependencies
 
 - **mistral-small**: Language model for text generation
-- **nomic-embed-text**: Embedding model for vector representations
+- **qwen3-embedding**: Embedding model for vector representations
 
 ### Python Libraries
 - **langchain**: RAG framework
@@ -157,7 +157,7 @@ Notes:
 - Chunk size: 1000 characters
 - Chunk overlap: 200 characters
 - LLM model: mistral-small
-- Embedding model: nomic-embed-text
+- Embedding model: qwen3-embedding
 - Temperature: 0.7
 - Retrieval k: 4 documents
 - Vector store: ./chroma_db
