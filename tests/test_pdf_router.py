@@ -25,7 +25,7 @@ def test_load_pdf_download_and_overwrite(tmp_path, monkeypatch):
     url = "https://example.com/test.pdf"
 
     # First download -> should not be marked overwritten
-    resp = client.post("/pdf/download", json={"url": url})
+    resp = client.post("/pdf/download", json={"url": url, "name": "test.pdf"})
     assert resp.status_code == 200
     j = resp.json()
     assert "path" in j
@@ -33,7 +33,7 @@ def test_load_pdf_download_and_overwrite(tmp_path, monkeypatch):
     assert os.path.exists(j["path"]) is True
 
     # Second download -> should be marked overwritten
-    resp2 = client.post("/pdf/download", json={"url": url})
+    resp2 = client.post("/pdf/download", json={"url": url, "name": "test.pdf"})
     assert resp2.status_code == 200
     j2 = resp2.json()
     assert j2.get("overwritten") is True
@@ -76,7 +76,7 @@ def test_upload_pdf_reject_non_pdf(tmp_path):
 
 def test_load_pdf_local_path_echo():
     # Local path should be echoed
-    resp = client.post("/pdf/download", json={"url": "/some/local/path/doc.pdf"})
+    resp = client.post("/pdf/download", json={"url": "/some/local/path/doc.pdf", "name": "doc.pdf"})
     assert resp.status_code == 200
     j = resp.json()
     assert "loaded from /some/local/path/doc.pdf" in j.get("message", "")
