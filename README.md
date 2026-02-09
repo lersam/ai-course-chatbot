@@ -20,10 +20,10 @@ Before running the application, ensure you have:
 2. **Ollama** installed and running locally
    - Install from: https://ollama.ai
    - Pull required models:
-     ```bash
-     ollama pull llama2
-     ollama pull nomic-embed-text
-     ```
+   ```bash
+   ollama pull mistral-small
+   ollama pull nomic-embed-text
+   ```
 
 ## Installation
 
@@ -100,10 +100,11 @@ python ai_course_chatbot/setup_vector_store.py --pdf file1.pdf file2.pdf file3.p
 
 ### Custom Model
 
-Use a different Ollama model:
+Use a different Ollama model (or set `OLLAMA_MODEL` environment variable). The project defaults to `mistral-small`.
 
 ```bash
-python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model mistral
+python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model mistral-small
+# or set environment variable: export OLLAMA_MODEL=mistral-small  (Windows: set OLLAMA_MODEL=mistral-small)
 ```
 
 ### HTTP API example: POST /pdf/download
@@ -200,7 +201,7 @@ python main.py --pdf document.pdf --reload
 ### Available Options
 
 - `--pdf`: Path(s) to PDF file(s) to load (required for first run)
-- `--model`: Ollama LLM model to use (default: llama2)
+- `--model`: Ollama LLM model to use (default: mistral-small). You can also set the `OLLAMA_MODEL` env var.
 - `--embedding-model`: Ollama embedding model (default: nomic-embed-text)
 - `--reload`: Force reload PDFs into vector store
 
@@ -230,7 +231,7 @@ python main.py --pdf document.pdf --reload
 │                      (rag_chatbot.py)                           │
 │  ┌──────────────────┐          ┌──────────────────┐             │
 │  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (llama2)       │             │
+│  │  RetrievalQA     │          │   (mistral-small)│             │
 │  └─────────┬────────┘          └──────────────────┘             │
 └────────────┼────────────────────────────────────────────────────┘
          │
@@ -340,10 +341,10 @@ Creating vector store...
 Added 125 documents to vector store
 Vector store created successfully!
 
-Initializing chatbot with model: llama2
+Initializing chatbot with model: mistral-small
 
 ============================================================
-AI RAG Chatbot (Model: llama2)
+AI RAG Chatbot (Model: mistral-small)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 
@@ -367,7 +368,7 @@ Goodbye!
 
 ### Memory Issues
 - Reduce chunk size in `pdf_loader.py` if processing large PDFs
-- Use smaller models (e.g., `llama2:7b` instead of `llama2:70b`)
+- Use smaller models (e.g., `mistral-small`) when running on limited hardware
 
 ### Import Errors
 - Reinstall dependencies: `pip install -r requirements.txt --upgrade`

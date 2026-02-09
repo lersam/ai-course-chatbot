@@ -15,7 +15,7 @@
 │                      (rag_chatbot.py)                           │
 │  ┌──────────────────┐          ┌──────────────────┐             │
 │  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (llama2)       │             │
+│  │  RetrievalQA     │          │   (mistral-small)│             │
 │  └─────────┬────────┘          └──────────────────┘             │
 └────────────┼────────────────────────────────────────────────────┘
              │
@@ -77,7 +77,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
                             │
                             ▼
                       Ollama LLM
-                       (llama2)
+                       (mistral-small)
                             │
                             ▼
                    Generated Answer + Sources
@@ -127,7 +127,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `main()`: Optional helper that parses CLI args and calls `setup_vector_store`.
 - **Arguments**:
   - `--pdf`: PDF files to load (required to build a vector store)
-  - `--model`: LLM model to use (default: llama2)
+  - `--model`: LLM model to use (default: mistral-small)
   - `--embedding-model`: Embedding model (default: nomic-embed-text)
 
 Notes:
@@ -135,8 +135,7 @@ Notes:
 
 ## External Dependencies
 
-### Ollama Models
-- **llama2**: Language model for text generation
+- **mistral-small**: Language model for text generation
 - **nomic-embed-text**: Embedding model for vector representations
 
 ### Python Libraries
@@ -157,7 +156,7 @@ Notes:
 ### Default Settings
 - Chunk size: 1000 characters
 - Chunk overlap: 200 characters
-- LLM model: llama2
+- LLM model: mistral-small
 - Embedding model: nomic-embed-text
 - Temperature: 0.7
 - Retrieval k: 4 documents

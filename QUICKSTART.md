@@ -11,7 +11,7 @@ This guide will help you get the AI RAG Chatbot up and running in minutes.
 3. Pull required models:
 
 ```bash
-ollama pull llama2
+ollama pull mistral-small
 ollama pull nomic-embed-text
 ```
 
@@ -71,7 +71,7 @@ Once the chatbot starts, you'll see:
 
 ```
 ============================================================
-AI RAG Chatbot (Model: llama2)
+AI RAG Chatbot (Model: mistral-small)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 
