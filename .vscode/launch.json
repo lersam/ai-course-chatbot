@@ -32,7 +32,7 @@
             "module": "ai_course_chatbot.setup_vector_store",
             "args": [
                 "--pdf",
-                "data/tutorial_edit.pdf",
+                "data/WHERE ARE MY LEGS MAR 25 2025 WEB.pdf",
                 "--reload"
             ]
         }

@@ -2,7 +2,7 @@
 Vector Store Module
 Manages document embeddings and vector storage using ChromaDB.
 """
-import os
+from pathlib import Path
 
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import OllamaEmbeddings
@@ -27,8 +27,7 @@ class VectorStore:
         self.persist_directory = persist_directory
         self.embedding_model = embedding_model
 
-        # Create persist directory if it doesn't exist
-        os.makedirs(persist_directory, exist_ok=True)
+        Path(persist_directory).mkdir(parents=True, exist_ok=True)
 
         # Initialize Ollama embeddings
         self.embeddings = OllamaEmbeddings(model=embedding_model)
@@ -49,6 +48,20 @@ class VectorStore:
 
         if self.vectorstore is None:
             # Create new vector store
+            # Normalize document metadata: store only basename for `source` to avoid full paths
+            for doc in documents:
+                try:
+                    md = getattr(doc, "metadata", None)
+                    if isinstance(md, dict):
+                        src = md.get("source")
+                        if isinstance(src, str) and src:
+                            p = Path(src)
+
+                            if p.is_absolute() or p.name != src:
+                                md["source"] = p.stem
+                except Exception:
+                    pass
+
             self.vectorstore = Chroma.from_documents(
                 documents=documents,
                 embedding=self.embeddings,
