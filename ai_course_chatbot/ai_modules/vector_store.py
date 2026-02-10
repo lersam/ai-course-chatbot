@@ -47,8 +47,8 @@ class VectorStore:
             return
 
         if self.vectorstore is None:
-            # Create new vector store
-            # Normalize document metadata: store only basename for `source` to avoid full paths
+            # Create new vector store and add documents in batches to improve throughput.
+            # Normalize document metadata: store only filename stem for `source` to avoid full paths
             for doc in documents:
                 try:
                     md = getattr(doc, "metadata", None)
@@ -56,19 +56,31 @@ class VectorStore:
                         src = md.get("source")
                         if isinstance(src, str) and src:
                             p = Path(src)
-
                             if p.is_absolute() or p.name != src:
                                 md["source"] = p.stem
                 except Exception:
                     pass
 
-            self.vectorstore = Chroma.from_documents(
-                documents=documents,
-                embedding=self.embeddings,
+            # Create an empty Chroma instance (avoid doing a single large from_documents call)
+            self.vectorstore = Chroma(
                 collection_name=self.collection_name,
+                embedding_function=self.embeddings,
                 persist_directory=self.persist_directory,
-                collection_metadata={"source": "pdf_loader"}# TODO: Add more metadata if needed (e.g., original PDF name, chunk index, etc.
             )
+
+            # Add documents in batches to reduce per-call overhead
+            batch_size = 64
+            for i in range(0, len(documents), batch_size):
+                batch = documents[i : i + batch_size]
+                self.vectorstore.add_documents(batch)
+
+            # Attempt a single persist at the end if supported by the Chroma instance
+            try:
+                if hasattr(self.vectorstore, "persist"):
+                    self.vectorstore.persist()
+            except Exception:
+                # Non-fatal: some Chroma wrappers may not expose persist or may persist automatically
+                pass
         else:
             # Add to existing vector store
             self.vectorstore.add_documents(documents)

@@ -59,7 +59,6 @@ def main():
 
 
     setup_vector_store(args.pdf)
-    print("Vector store populated successfully.")
 
 
 if __name__ == "__main__":
