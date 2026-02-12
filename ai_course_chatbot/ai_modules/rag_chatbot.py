@@ -7,6 +7,7 @@ from langchain_community.llms import Ollama
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from .vector_store import VectorStore
+import os
 
 
 class RAGChatbot:
@@ -72,10 +73,20 @@ class RAGChatbot:
                 sources = result["source_documents"]
                 if sources:
                     answer += "\n\nSources:"
-                    for i, doc in enumerate(sources, 1):
+                    seen = set()
+                    idx = 1
+                    for doc in sources:
                         source = doc.metadata.get("source", "Unknown")
                         page = doc.metadata.get("page", "N/A")
-                        answer += f"\n{i}. {source} (Page {page})"
+
+                        display_source = os.path.splitext(os.path.basename(source))[0]
+                        key = (display_source, page)
+                        if key in seen:
+                            continue
+
+                        seen.add(key)
+                        answer += f"\n{idx}. {display_source} (Page {page})"
+                        idx += 1
 
             return answer
         except Exception as e:
