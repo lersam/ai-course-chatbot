@@ -4,8 +4,8 @@ Manages document embeddings and vector storage using ChromaDB.
 """
 from pathlib import Path
 
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import OllamaEmbeddings
+from langchain_chroma import Chroma
+from langchain_ollama import OllamaEmbeddings
 from typing import List
 
 
