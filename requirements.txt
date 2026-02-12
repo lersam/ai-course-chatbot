@@ -6,6 +6,7 @@ langchain==0.3.27
 langchain-community==0.3.27
 langchain-text-splitters==0.3.11
 langchain-ollama
+langchain-chroma
 
 # Ollama client (optional runtime for Ollama server)
 ollama==0.6.1
