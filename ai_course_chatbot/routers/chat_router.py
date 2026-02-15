@@ -43,7 +43,7 @@ def get_chatbot() -> RAGChatbot:
         # Initialize chatbot
         _chatbot_instance = RAGChatbot(
             vector_store=vector_store,
-            model_name=os.getenv("OLLAMA_MODEL", "mistral-small"),
+            model_name=os.getenv("OLLAMA_MODEL", "gema3"),
             temperature=0.7
         )
     

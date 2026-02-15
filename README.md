@@ -22,6 +22,7 @@ Before running the application, ensure you have:
    - Pull required models:
    ```bash
    ollama pull mistral-small
+   gema3
    ollama pull qwen3-embedding
    ```
 

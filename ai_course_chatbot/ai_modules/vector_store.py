@@ -2,7 +2,12 @@
 Vector Store Module
 Manages document embeddings and vector storage using ChromaDB.
 """
+import os
 from pathlib import Path
+
+# Disable LangChain/Chroma telemetry at import time to keep the CLI offline-only.
+os.environ.setdefault("LANGCHAIN_TELEMETRY", "false")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "false")
 
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
@@ -65,7 +70,7 @@ class VectorStore:
             self.vectorstore = Chroma(
                 collection_name=self.collection_name,
                 embedding_function=self.embeddings,
-                persist_directory=self.persist_directory,
+                persist_directory=self.persist_directory
             )
 
             # Add documents in batches to reduce per-call overhead
