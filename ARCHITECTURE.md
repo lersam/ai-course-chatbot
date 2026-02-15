@@ -15,7 +15,7 @@
 │                      (rag_chatbot.py)                           │
 │  ┌──────────────────┐          ┌──────────────────┐             │
 │  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (gemma3)       │             │
+│  │  RetrievalQA     │          │   (gemma3:4b)       │             │
 │  └─────────┬────────┘          └──────────────────┘             │
 └────────────┼────────────────────────────────────────────────────┘
              │
@@ -57,7 +57,7 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
                                            ▲
                                            │
                                     Ollama Embeddings
-                                    (qwen3-embedding)
+                                    (qwen3-embedding:4b)
 ```
 
 Notes:
@@ -77,7 +77,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
                             │
                             ▼
                       Ollama LLM
-                       (gemma3)
+                       (gemma3:4b)
                             │
                             ▼
                    Generated Answer + Sources
@@ -105,7 +105,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `similarity_search()`: Search for similar documents
   - `get_retriever()`: Get retriever for RAG
 - **Storage**: ChromaDB (persistent on disk)
--- **Embeddings**: Ollama qwen3-embedding
+-- **Embeddings**: Ollama qwen3-embedding:4b
 
 ### RAG Chatbot (`rag_chatbot.py`)
 - **Purpose**: Handle user queries with RAG
@@ -127,16 +127,16 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `main()`: Optional helper that parses CLI args and calls `setup_vector_store`.
 - **Arguments**:
   - `--pdf`: PDF files to load (required to build a vector store)
-  - `--model`: LLM model to use (default: gemma3)
-  - `--embedding-model`: Embedding model (default: qwen3-embedding)
+  - `--model`: LLM model to use (default: gemma3:4b)
+  - `--embedding-model`: Embedding model (default: qwen3-embedding:4b)
 
 Notes:
 - The previous `--reload`/auto-reload behavior was intentionally removed: re-loading or overwriting an existing collection must be handled explicitly by the user or by an enhanced helper if desired.
 
 ## External Dependencies
 
-- **gemma3**: Language model for text generation
-- **qwen3-embedding**: Embedding model for vector representations
+- **gemma3:4b**: Language model for text generation
+- **qwen3-embedding:4b**: Embedding model for vector representations
 
 ### Python Libraries
 - **langchain**: RAG framework
@@ -156,8 +156,8 @@ Notes:
 ### Default Settings
 - Chunk size: 1000 characters
 - Chunk overlap: 200 characters
-- LLM model: gemma3
-- Embedding model: qwen3-embedding
+- LLM model: gemma3:4b
+- Embedding model: qwen3-embedding:4b
 - Temperature: 0.7
 - Retrieval k: 4 documents
 - Vector store: ./chroma_db

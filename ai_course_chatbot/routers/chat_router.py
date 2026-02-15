@@ -30,7 +30,7 @@ def get_chatbot() -> RAGChatbot:
         vector_store = VectorStore(
             collection_name="pdf_documents",
             persist_directory="./chroma_db",
-            embedding_model="qwen3-embedding"
+            embedding_model="qwen3-embedding:4b"
         )
         
         # Try to load existing vector store
@@ -43,7 +43,7 @@ def get_chatbot() -> RAGChatbot:
         # Initialize chatbot
         _chatbot_instance = RAGChatbot(
             vector_store=vector_store,
-            model_name=os.getenv("OLLAMA_MODEL", "gemma3"),
+            model_name=os.getenv("OLLAMA_MODEL", "gemma3:4b"),
             temperature=0.7
         )
     

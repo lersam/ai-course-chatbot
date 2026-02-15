@@ -11,8 +11,8 @@ This guide will help you get the AI RAG Chatbot up and running in minutes.
 3. Pull required models:
 
 ```bash
-ollama pull gemma3
-ollama pull qwen3-embedding
+ollama pull gemma3:4b
+ollama pull qwen3-embedding:4b
 ```
 
 Verify Ollama is running:
@@ -71,7 +71,7 @@ Once the chatbot starts, you'll see:
 
 ```
 ============================================================
-AI RAG Chatbot (Model: gemma3)
+AI RAG Chatbot (Model: gemma3:4b)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 

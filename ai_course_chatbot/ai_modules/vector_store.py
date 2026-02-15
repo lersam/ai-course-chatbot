@@ -19,7 +19,7 @@ class VectorStore:
 
     def __init__(self, collection_name: str = "pdf_documents",
                  persist_directory: str = "./chroma_db",
-                 embedding_model: str = "qwen3-embedding"):
+                 embedding_model: str = "qwen3-embedding:4b"):
         """
         Initialize the vector store.
         
@@ -77,7 +77,8 @@ class VectorStore:
             batch_size = 64
             for i in range(0, len(documents), batch_size):
                 batch = documents[i : i + batch_size]
-                self.vectorstore.add_documents(batch)
+                new_ids = self.vectorstore.add_documents(batch)
+                print(f"Added batch of {len(batch)} documents with IDs: {new_ids}")
 
             # Attempt a single persist at the end if supported by the Chroma instance
             try:
@@ -88,7 +89,8 @@ class VectorStore:
                 pass
         else:
             # Add to existing vector store
-            self.vectorstore.add_documents(documents)
+            new_ids = self.vectorstore.add_documents(documents)
+            print(f"Added {len(documents)} documents with IDs: {new_ids}")
 
         print(f"Added {len(documents)} documents to vector store")
 

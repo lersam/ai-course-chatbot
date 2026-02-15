@@ -21,9 +21,8 @@ Before running the application, ensure you have:
    - Install from: https://ollama.ai
    - Pull required models:
    ```bash
-   ollama pull gemma3
-
-   ollama pull qwen3-embedding
+   ollama pull gemma3:4b
+   ollama pull qwen3-embedding:4b
    ```
 
 ## Installation
@@ -101,11 +100,11 @@ python ai_course_chatbot/setup_vector_store.py --pdf file1.pdf file2.pdf file3.p
 
 ### Custom Model
 
-Use a different Ollama model (or set `OLLAMA_MODEL` environment variable). The project defaults to `gemma3`.
+Use a different Ollama model (or set `OLLAMA_MODEL` environment variable). The project defaults to `gemma3:4b`.
 
 ```bash
-python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model gemma3
-# or set environment variable: export OLLAMA_MODEL=gemma3  (Windows: set OLLAMA_MODEL=gemma3)
+python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model gemma3:4b
+# or set environment variable: export OLLAMA_MODEL=gemma3:4b  (Windows: set OLLAMA_MODEL=gemma3:4b)
 ```
 
 ### HTTP API example: POST /pdf/download
@@ -202,8 +201,8 @@ python main.py --pdf document.pdf --reload
 ### Available Options
 
 - `--pdf`: Path(s) to PDF file(s) to load (required for first run)
-- `--model`: Ollama LLM model to use (default: gemma3). You can also set the `OLLAMA_MODEL` env var.
-- `--embedding-model`: Ollama embedding model (default: qwen3-embedding)
+- `--model`: Ollama LLM model to use (default: gemma3:4b). You can also set the `OLLAMA_MODEL` env var.
+- `--embedding-model`: Ollama embedding model (default: qwen3-embedding:4b)
 - `--reload`: Force reload PDFs into vector store
 
 ## How It Works
@@ -232,7 +231,7 @@ python main.py --pdf document.pdf --reload
 │                      (rag_chatbot.py)                           │
 │  ┌──────────────────┐          ┌──────────────────┐             │
 │  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (gemma3)       │             │
+│  │  RetrievalQA     │          │   (gemma3:4b)       │             │
 │  └─────────┬────────┘          └──────────────────┘             │
 └────────────┼────────────────────────────────────────────────────┘
          │
@@ -273,7 +272,7 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
                    ▲
                    │
                 Ollama Embeddings
-               (qwen3-embedding)
+               (qwen3-embedding:4b)
 ```
 
 Notes:
@@ -283,7 +282,7 @@ Notes:
 ### Components
 
 - **PDF Loader (`pdf_loader.py`)**: loads and chunks PDFs (default chunk size 1000, overlap 200).
--- **Vector Store (`vector_store.py`)**: manages embeddings and stores them in ChromaDB (embedding model: `qwen3-embedding`).
+-- **Vector Store (`vector_store.py`)**: manages embeddings and stores them in ChromaDB (embedding model: `qwen3-embedding:4b`).
 - **RAG Chatbot (`rag_chatbot.py`)**: handles queries, retrieval, and LLM generation using Ollama.
 - **Chat Router (`chat_router.py`)**: FastAPI endpoints for web-based chat interface.
 - **Web Interface (`static/`)**: HTML, CSS, and JavaScript for the chat UI.
@@ -342,10 +341,10 @@ Creating vector store...
 Added 125 documents to vector store
 Vector store created successfully!
 
-Initializing chatbot with model: gemma3
+Initializing chatbot with model: gemma3:4b
 
 ============================================================
-AI RAG Chatbot (Model: gemma3)
+AI RAG Chatbot (Model: gemma3:4b)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 
@@ -369,7 +368,7 @@ Goodbye!
 
 ### Memory Issues
 - Reduce chunk size in `pdf_loader.py` if processing large PDFs
-- Use smaller models (e.g., `gemma3`) when running on limited hardware
+- Use smaller models (e.g., `gemma3:4b`) when running on limited hardware
 
 ### Import Errors
 - Reinstall dependencies: `pip install -r requirements.txt --upgrade`
