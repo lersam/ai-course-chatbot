@@ -15,7 +15,7 @@
 │                      (rag_chatbot.py)                           │
 │  ┌──────────────────┐          ┌──────────────────┐             │
 │  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (gemma3:4b)       │             │
+│  │  RetrievalQA     │          │   (gemma3:4b)    │             │
 │  └─────────┬────────┘          └──────────────────┘             │
 └────────────┼────────────────────────────────────────────────────┘
              │
@@ -120,18 +120,42 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - Source citation with page numbers
   - Context-aware responses
 
-### Main Application (`setup_vector_store.py`)
-- **Purpose**: CLI entry point and helper to build a VectorStore from PDFs
-- **Key Functions**:
-  - `setup_vector_store(pdf_paths)`: Initialize a new VectorStore by loading the provided PDF paths. This helper requires explicit PDF paths and will return the populated `VectorStore` or None if no documents were loaded.
-  - `main()`: Optional helper that parses CLI args and calls `setup_vector_store`.
-- **Arguments**:
-  - `--pdf`: PDF files to load (required to build a vector store)
-  - `--model`: LLM model to use (default: gemma3:4b)
-  - `--embedding-model`: Embedding model (default: qwen3-embedding:4b)
+### FastAPI Application (`main.py`)
+- **Purpose**: Host the REST API, serve the SPA frontend, and warm up the chatbot on startup.
+- **Responsibilities**:
+  - Registers the `chat`, `pdf`, and `monitoring` routers.
+  - Mounts `static/` (HTML/CSS/JS) under `/static` and serves `index.html` at `/`.
+  - Calls `chat_router.get_chatbot()` during lifespan startup to pre-load the vector store and model when possible.
 
-Notes:
-- The previous `--reload`/auto-reload behavior was intentionally removed: re-loading or overwriting an existing collection must be handled explicitly by the user or by an enhanced helper if desired.
+### Routers (`routers/`)
+- **`chat_router.py`**
+  - Loads `VectorStore` from `./chroma_db` and instantiates `RAGChatbot` with `OLLAMA_MODEL` (default `gemma3:4b`).
+  - Exposes `POST /chat/` and `GET /chat/status`.
+- **`pdf_router.py`**
+  - Accepts `POST /pdf/download` (URL ingestion) and `POST /pdf/upload` (multipart uploads).
+  - Uses controller helpers to save files to the temp downloads directory and schedules `worker.update_vector_store` via Celery.
+- **`monitoring.py`**
+  - Surfaces `/monitoring/` and `/monitoring/celery-task` which read task info from the SQLite `celery_taskmeta` table via controller helpers.
+  - Relies on shared Pydantic models under `models/` such as `CeleryTaskStatus`.
+
+### Controllers (`controllers/`)
+- **`pdf_controller.py`**: Async-friendly utilities to download PDFs or persist uploaded bytes to the system temp directory (`tempfile.gettempdir()/ai-course-chatbot/downloads`).
+- **`upload_status_controller.py`**: Functions that inspect the configured Celery SQLite backend (`celery_taskmeta`) using `aiosqlite` and return summarized status dictionaries.
+
+### Worker (`worker.py`)
+- **Purpose**: Defines the Celery app and the `update_vector_store` task.
+- **Details**:
+  - Defaults to SQLite for both broker (`sqla+sqlite:///./celerydb.sqlite`) and backend (`db+sqlite:///./celery_results.sqlite`).
+  - `update_vector_store` calls `setup_vector_store(pdf_paths)` and manually updates task state to `RUNNING`/`SUCCESS`/`FAILURE` for the monitoring endpoints.
+
+### Vector Store Builder (`setup_vector_store.py`)
+- **Purpose**: CLI entry point that rebuilds the Chroma collection from an explicit list of PDF paths.
+- **Key Functions**:
+  - `setup_vector_store(pdf_paths)`: Loads and chunks PDFs, then writes them into a new `VectorStore` instance. Returns the populated store or `None` if nothing was ingested.
+  - `main()`: Parses CLI arguments and invokes `setup_vector_store` when `--pdf` values are provided.
+- **Arguments**:
+  - `--pdf`: One or more PDF files (required). The helper raises if no PDFs are supplied.
+  - `--model`, `--embedding-model`, `--reload`: Currently placeholders; the ingestion path always uses the defaults baked into `VectorStore` and does not support incremental reloads.
 
 ## External Dependencies
 
@@ -139,24 +163,24 @@ Notes:
 - **qwen3-embedding:4b**: Embedding model for vector representations
 
 ### Python Libraries
-- **langchain**: RAG framework
-- **langchain-community**: Community integrations
-- **chromadb**: Vector database
-- **pypdf**: PDF processing
-- **ollama**: Ollama client
+- **langchain / langchain-community**: Retrieval orchestration and integrations
+- **chromadb**: Persistent vector database
+- **pypdf**: PDF text extraction
+- **ollama / langchain-ollama**: Local LLM client
+- **fastapi / starlette / uvicorn**: HTTP API and web server
+- **celery / kombu-sqlalchemy / aiosqlite**: Background ingestion tasks and SQLite-backed status tracking
 
 ## Configuration
 
 ### Environment Variables
-- Not currently used, but can be added for:
-  - Ollama API endpoint
-  - Model names
-  - Vector store path
+- `OLLAMA_MODEL` — overrides the default `gemma3:4b` that `chat_router` uses when instantiating `RAGChatbot`.
+- `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` — allow pointing the worker at a non-SQLite broker or backend (default to local SQLite files).
+- `LANGCHAIN_TELEMETRY` / `ANONYMIZED_TELEMETRY` — set to `false` by `vector_store.py` to keep ingestion offline.
 
 ### Default Settings
 - Chunk size: 1000 characters
 - Chunk overlap: 200 characters
-- LLM model: gemma3:4b
+- LLM model: gemma3:4b (override via `OLLAMA_MODEL`)
 - Embedding model: qwen3-embedding:4b
 - Temperature: 0.7
 - Retrieval k: 4 documents
