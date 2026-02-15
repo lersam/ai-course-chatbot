@@ -21,8 +21,8 @@ Before running the application, ensure you have:
    - Install from: https://ollama.ai
    - Pull required models:
    ```bash
-   ollama pull mistral-small
-   gema3
+   ollama pull gemma3
+
    ollama pull qwen3-embedding
    ```
 
@@ -101,11 +101,11 @@ python ai_course_chatbot/setup_vector_store.py --pdf file1.pdf file2.pdf file3.p
 
 ### Custom Model
 
-Use a different Ollama model (or set `OLLAMA_MODEL` environment variable). The project defaults to `mistral-small`.
+Use a different Ollama model (or set `OLLAMA_MODEL` environment variable). The project defaults to `gemma3`.
 
 ```bash
-python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model mistral-small
-# or set environment variable: export OLLAMA_MODEL=mistral-small  (Windows: set OLLAMA_MODEL=mistral-small)
+python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model gemma3
+# or set environment variable: export OLLAMA_MODEL=gemma3  (Windows: set OLLAMA_MODEL=gemma3)
 ```
 
 ### HTTP API example: POST /pdf/download
@@ -202,7 +202,7 @@ python main.py --pdf document.pdf --reload
 ### Available Options
 
 - `--pdf`: Path(s) to PDF file(s) to load (required for first run)
-- `--model`: Ollama LLM model to use (default: mistral-small). You can also set the `OLLAMA_MODEL` env var.
+- `--model`: Ollama LLM model to use (default: gemma3). You can also set the `OLLAMA_MODEL` env var.
 - `--embedding-model`: Ollama embedding model (default: qwen3-embedding)
 - `--reload`: Force reload PDFs into vector store
 
@@ -232,7 +232,7 @@ python main.py --pdf document.pdf --reload
 │                      (rag_chatbot.py)                           │
 │  ┌──────────────────┐          ┌──────────────────┐             │
 │  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (mistral-small)│             │
+│  │  RetrievalQA     │          │   (gemma3)       │             │
 │  └─────────┬────────┘          └──────────────────┘             │
 └────────────┼────────────────────────────────────────────────────┘
          │
@@ -342,10 +342,10 @@ Creating vector store...
 Added 125 documents to vector store
 Vector store created successfully!
 
-Initializing chatbot with model: mistral-small
+Initializing chatbot with model: gemma3
 
 ============================================================
-AI RAG Chatbot (Model: mistral-small)
+AI RAG Chatbot (Model: gemma3)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 
@@ -369,7 +369,7 @@ Goodbye!
 
 ### Memory Issues
 - Reduce chunk size in `pdf_loader.py` if processing large PDFs
-- Use smaller models (e.g., `mistral-small`) when running on limited hardware
+- Use smaller models (e.g., `gemma3`) when running on limited hardware
 
 ### Import Errors
 - Reinstall dependencies: `pip install -r requirements.txt --upgrade`

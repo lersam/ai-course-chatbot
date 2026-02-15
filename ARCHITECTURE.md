@@ -15,7 +15,7 @@
 │                      (rag_chatbot.py)                           │
 │  ┌──────────────────┐          ┌──────────────────┐             │
 │  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (mistral-small)│             │
+│  │  RetrievalQA     │          │   (gemma3)       │             │
 │  └─────────┬────────┘          └──────────────────┘             │
 └────────────┼────────────────────────────────────────────────────┘
              │
@@ -77,7 +77,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
                             │
                             ▼
                       Ollama LLM
-                       (mistral-small)
+                       (gemma3)
                             │
                             ▼
                    Generated Answer + Sources
@@ -127,7 +127,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `main()`: Optional helper that parses CLI args and calls `setup_vector_store`.
 - **Arguments**:
   - `--pdf`: PDF files to load (required to build a vector store)
-  - `--model`: LLM model to use (default: mistral-small)
+  - `--model`: LLM model to use (default: gemma3)
   - `--embedding-model`: Embedding model (default: qwen3-embedding)
 
 Notes:
@@ -135,7 +135,7 @@ Notes:
 
 ## External Dependencies
 
-- **mistral-small**: Language model for text generation
+- **gemma3**: Language model for text generation
 - **qwen3-embedding**: Embedding model for vector representations
 
 ### Python Libraries
@@ -156,7 +156,7 @@ Notes:
 ### Default Settings
 - Chunk size: 1000 characters
 - Chunk overlap: 200 characters
-- LLM model: mistral-small
+- LLM model: gemma3
 - Embedding model: qwen3-embedding
 - Temperature: 0.7
 - Retrieval k: 4 documents
