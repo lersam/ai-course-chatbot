@@ -106,7 +106,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `similarity_search()`: Search for similar documents
   - `get_retriever()`: Get retriever for RAG
 - **Storage**: ChromaDB (persistent on disk with per-batch persistence helper)
-- **Embeddings**: Ollama qwen3-embedding:4b
+- **Embeddings**: Ollama nomic-embed-text
 
 ### RAG Chatbot (`rag_chatbot.py`)
 - **Purpose**: Handle user queries with RAG
@@ -184,7 +184,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
 - Chunk size: 1000 characters
 - Chunk overlap: 200 characters
 - LLM model: gemma3:4b (override via `OLLAMA_MODEL`)
-- Embedding model: qwen3-embedding:4b
+- Embedding model: nomic-embed-text
 - Temperature: 0.7
 - Retrieval k: 4 documents
 - Vector store: ./chroma_db

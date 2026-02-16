@@ -22,7 +22,7 @@ Before running the application, ensure you have:
    - Pull required models:
    ```bash
    ollama pull gemma3:4b
-   ollama pull qwen3-embedding:4b
+   ollama pull nomic-embed-text
    ```
 
 ## Installation
@@ -281,7 +281,7 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
                    ▲
                    │
                 Ollama Embeddings
-               (qwen3-embedding:4b)
+               (nomic-embed-text)
 ```
 
 Notes:
@@ -291,7 +291,7 @@ Notes:
 ### Components
 
 - **PDF Loader (`ai_modules/pdf_loader.py`)**: extracts and chunks PDF text (chunk size 1000, overlap 200) for downstream embeddings.
-- **Vector Store (`ai_modules/vector_store.py`)**: wraps ChromaDB plus Ollama `qwen3-embedding:4b` embeddings, handling add/load/search operations.
+- **Vector Store (`ai_modules/vector_store.py`)**: wraps ChromaDB plus `nomic-embed-text` embeddings, handling add/load/search operations.
 - **RAG Chatbot (`ai_modules/rag_chatbot.py`)**: wires the retriever into LangChain's `RetrievalQA` and proxies to the Ollama chat model (default `gemma3:4b`).
 - **Routers (`routers/`)**: `chat_router.py` serves chat/status, `pdf_router.py` schedules ingestion jobs, and `monitoring.py` exposes Celery task visibility.
 - **Controllers (`controllers/`)**: shared helpers to download/upload PDFs and to inspect Celery's SQLite result backend.

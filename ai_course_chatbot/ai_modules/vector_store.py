@@ -21,7 +21,7 @@ class VectorStore:
 
     def __init__(self, collection_name: str = "pdf_documents",
                  persist_directory: str = "./chroma_db",
-                 embedding_model: str = "qwen3-embedding:4b"):
+                 embedding_model: str = "nomic-embed-text"):
         """
         Initialize the vector store.
 
@@ -37,12 +37,12 @@ class VectorStore:
         Path(persist_directory).mkdir(parents=True, exist_ok=True)
 
         # Initialize Ollama embeddings
-        self.embeddings = OllamaEmbeddings(model=embedding_model)
+        embeddings = OllamaEmbeddings(model=embedding_model)
 
         # Initialize ChromaDB vector store
         self.vectorstore = Chroma(
             collection_name=self.collection_name,
-            embedding_function=self.embeddings,
+            embedding_function=embeddings,
             persist_directory=self.persist_directory
         )
 
@@ -104,10 +104,6 @@ class VectorStore:
         Returns:
             List of similar documents
         """
-        if self.vectorstore is None:
-            print("Warning: Vector store not initialized. Please load documents first.")
-            return []
-
         results = self.vectorstore.similarity_search(query, k=k)
         return results
 
@@ -121,16 +117,10 @@ class VectorStore:
         Returns:
             Retriever object
         """
-        if self.vectorstore is None:
-            raise ValueError("Vector store not initialized. Please load documents first using add_documents().")
-
         return self.vectorstore.as_retriever(search_kwargs={"k": k})
 
     def document_count(self) -> int:
         """Return the number of stored documents in the active collection."""
-        if self.vectorstore is None:
-            return 0
-
         try:
             collection = getattr(self.vectorstore, "_collection", None)
             if collection is not None:
@@ -143,43 +133,6 @@ class VectorStore:
     def has_documents(self) -> bool:
         """Check whether the collection contains at least one document."""
         return self.document_count() > 0
-
-    def clear_collection(self) -> None:
-        """
-        Clear all documents from the collection.
-        
-        This completely removes all documents from the ChromaDB collection,
-        effectively rebuilding it from scratch. Use this when you want to
-        start fresh rather than append/deduplicate.
-        """
-        if self.vectorstore is None:
-            print("Warning: Vector store not initialized.")
-            return
-        
-        try:
-            # Get the underlying ChromaDB client and delete the collection
-            client = self.vectorstore._client
-            try:
-                client.delete_collection(name=self.collection_name)
-                print(f"Cleared collection '{self.collection_name}'")
-            except ValueError:
-                # Collection doesn't exist, which is fine - nothing to clear
-                print(f"Collection '{self.collection_name}' does not exist; skipping deletion")
-            except Exception as e:
-                # Log unexpected errors during deletion but continue to recreate
-                print(f"Warning: Unexpected error deleting collection: {e}")
-            
-            # Recreate the collection with the same settings
-            self.vectorstore = Chroma(
-                collection_name=self.collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=self.persist_directory
-            )
-            print(f"Recreated empty collection '{self.collection_name}'")
-        except Exception as e:
-            # Fatal error during recreation - log and re-raise
-            print(f"Error recreating collection: {e}")
-            raise
 
     def _prepare_documents(self, documents: List) -> Tuple[List, List[str]]:
         """Normalize metadata and generate stable IDs for each document."""
