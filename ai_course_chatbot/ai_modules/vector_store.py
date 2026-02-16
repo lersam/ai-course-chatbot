@@ -34,27 +34,17 @@ class VectorStore:
         self.persist_directory = persist_directory
         self.embedding_model = embedding_model
 
-        # Ensure the directory exists but defer creating the actual Chroma
-        # client and Ollama embeddings until they're needed. This avoids
-        # opening/locking on-disk DB files during simple unit tests that
-        # only instantiate the class or call add_documents([]).
         Path(persist_directory).mkdir(parents=True, exist_ok=True)
 
-        # Lazy-initialized attributes
-        self.embeddings = None
-        self.vectorstore = None
+        # Initialize Ollama embeddings
+        embeddings = OllamaEmbeddings(model=embedding_model)
 
-    def _ensure_initialized(self):
-        """Initialize embeddings and the underlying Chroma vectorstore when required."""
-        if self.embeddings is None:
-            self.embeddings = OllamaEmbeddings(model=self.embedding_model)
-
-        if self.vectorstore is None:
-            self.vectorstore = Chroma(
-                collection_name=self.collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=self.persist_directory
-            )
+        # Initialize ChromaDB vector store
+        self.vectorstore = Chroma(
+            collection_name=self.collection_name,
+            embedding_function=embeddings,
+            persist_directory=self.persist_directory
+        )
 
     def add_documents(self, documents: List) -> None:
         """
@@ -66,9 +56,6 @@ class VectorStore:
         if not documents:
             print("Warning: Empty document list provided, no documents will be added")
             return
-
-        # Ensure the vectorstore is ready before preparing/adding documents
-        self._ensure_initialized()
 
         normalized_docs, candidate_ids = self._prepare_documents(documents)
 
@@ -117,10 +104,6 @@ class VectorStore:
         Returns:
             List of similar documents
         """
-        # Initialize if needed and then run search
-        if self.vectorstore is None:
-            self._ensure_initialized()
-
         results = self.vectorstore.similarity_search(query, k=k)
         return results
 
@@ -134,15 +117,10 @@ class VectorStore:
         Returns:
             Retriever object
         """
-        # Ensure vectorstore is available and return a retriever
-        self._ensure_initialized()
         return self.vectorstore.as_retriever(search_kwargs={"k": k})
 
     def document_count(self) -> int:
         """Return the number of stored documents in the active collection."""
-        if self.vectorstore is None:
-            return 0
-
         try:
             collection = getattr(self.vectorstore, "_collection", None)
             if collection is not None:
@@ -155,48 +133,6 @@ class VectorStore:
     def has_documents(self) -> bool:
         """Check whether the collection contains at least one document."""
         return self.document_count() > 0
-
-    def clear_collection(self) -> None:
-        """
-        Clear all documents from the collection.
-        
-        This completely removes all documents from the ChromaDB collection,
-        effectively rebuilding it from scratch. Use this when you want to
-        start fresh rather than append/deduplicate.
-        """
-        # If not initialized, there's nothing to clear on disk
-        if self.vectorstore is None:
-            # Attempt to initialize to delete an existing on-disk collection
-            try:
-                self._ensure_initialized()
-            except Exception:
-                print("Warning: Vector store not initialized.")
-                return
-
-        try:
-            # Get the underlying ChromaDB client and delete the collection
-            client = self.vectorstore._client
-            try:
-                client.delete_collection(name=self.collection_name)
-                print(f"Cleared collection '{self.collection_name}'")
-            except ValueError:
-                # Collection doesn't exist, which is fine - nothing to clear
-                print(f"Collection '{self.collection_name}' does not exist; skipping deletion")
-            except Exception as e:
-                # Log unexpected errors during deletion but continue to recreate
-                print(f"Warning: Unexpected error deleting collection: {e}")
-            
-            # Recreate the collection with the same settings
-            self.vectorstore = Chroma(
-                collection_name=self.collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=self.persist_directory
-            )
-            print(f"Recreated empty collection '{self.collection_name}'")
-        except Exception as e:
-            # Fatal error during recreation - log and re-raise
-            print(f"Error recreating collection: {e}")
-            raise
 
     def _prepare_documents(self, documents: List) -> Tuple[List, List[str]]:
         """Normalize metadata and generate stable IDs for each document."""

@@ -40,11 +40,6 @@ def setup_vector_store(
     # Create a new vector store (uses default persist_directory unless overridden by VectorStore)
     vector_store = VectorStore(embedding_model=embedding_model)
 
-    # Clear collection if rebuild flag is set
-    if rebuild:
-        print("Rebuild flag set: clearing existing collection...")
-        vector_store.clear_collection()
-
     # Load PDFs
     print("Loading PDF files...")
     pdf_loader = PDFLoader()
@@ -68,8 +63,6 @@ def main():
     parser.add_argument("--model", default="gemma3:4b", help="Ollama model to use for chat (default: gemma3:4b)")
     parser.add_argument("--embedding-model", default="nomic-embed-text",
                         help="Embedding model to use for vectorization (default: nomic-embed-text)")
-    parser.add_argument("--rebuild", action="store_true",
-                        help="Clear the existing collection before loading documents (default: append/deduplicate)")
 
 
     args = parser.parse_args()
