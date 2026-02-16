@@ -4,18 +4,28 @@ Main Application
 Entry point for the AI RAG Chatbot application.
 """
 import argparse
+import os
 
 from ai_course_chatbot.ai_modules import VectorStore, PDFLoader
 
-def setup_vector_store(pdf_paths: list[str]) -> VectorStore | None:
+def setup_vector_store(
+    pdf_paths: list[str],
+    *,
+    embedding_model: str = "qwen3-embedding:4b",
+    ollama_model: str | None = None,
+    rebuild: bool = False,
+) -> VectorStore | None:
     """
-    Load PDF files into a new VectorStore and return it.
+    Load PDF files into a VectorStore and return it.
 
-    This function only handles loading the provided PDF files into a VectorStore.
-    It does not try to detect or load an existing vector store on disk.
+    By default, this function appends new documents to the existing collection
+    with deduplication. Use rebuild=True to clear the collection first.
 
     Args:
         pdf_paths: List of PDF paths to load (required)
+        embedding_model: Ollama embedding model used to generate vector representations
+        ollama_model: Optional chat model name (logged for reference)
+        rebuild: If True, clear the collection before loading documents
 
     Returns:
         VectorStore instance populated with the documents, or None if no documents were loaded.
@@ -23,8 +33,17 @@ def setup_vector_store(pdf_paths: list[str]) -> VectorStore | None:
     if not pdf_paths:
         raise ValueError("At least one PDF path must be provided to load into the VectorStore.")
 
+    print(f"Using embedding model: {embedding_model}")
+    if ollama_model:
+        print(f"Target chat model (for reference): {ollama_model}")
+
     # Create a new vector store (uses default persist_directory unless overridden by VectorStore)
-    vector_store = VectorStore()
+    vector_store = VectorStore(embedding_model=embedding_model)
+
+    # Clear collection if rebuild flag is set
+    if rebuild:
+        print("Rebuild flag set: clearing existing collection...")
+        vector_store.clear_collection()
 
     # Load PDFs
     print("Loading PDF files...")
@@ -46,10 +65,12 @@ def main():
     """Main application entry point."""
     parser = argparse.ArgumentParser(description="AI RAG Chatbot - Chat with your PDF documents using Ollama")
     parser.add_argument("--pdf", nargs="+", help="Path(s) to PDF file(s) to load")
-    parser.add_argument("--model", default="llama2", help="Ollama model to use (default: llama2)")
-    parser.add_argument("--embedding-model", default="qwen3-embedding",
-                        help="Ollama embedding model to use (default: qwen3-embedding)")
-    parser.add_argument("--reload", action="store_true", help="Force reload PDFs even if vector store exists")
+    parser.add_argument("--model", default="gemma3:4b", help="Ollama model to use for chat (default: gemma3:4b)")
+    parser.add_argument("--embedding-model", default="qwen3-embedding:4b",
+                        help="Ollama embedding model to use (default: qwen3-embedding:4b)")
+    parser.add_argument("--rebuild", action="store_true",
+                        help="Clear the existing collection before loading documents (default: append/deduplicate)")
+
 
     args = parser.parse_args()
 
@@ -58,7 +79,16 @@ def main():
     print("=" * 60)
 
 
-    setup_vector_store(args.pdf)
+    if args.model:
+        os.environ["OLLAMA_MODEL"] = args.model
+        print(f"Configured OLLAMA_MODEL={args.model} for downstream chat sessions.")
+
+    setup_vector_store(
+        args.pdf,
+        embedding_model=args.embedding_model,
+        ollama_model=args.model,
+        rebuild=args.rebuild,
+    )
 
 
 if __name__ == "__main__":

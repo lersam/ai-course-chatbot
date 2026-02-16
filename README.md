@@ -21,8 +21,8 @@ Before running the application, ensure you have:
    - Install from: https://ollama.ai
    - Pull required models:
    ```bash
-   ollama pull mistral-small
-   ollama pull qwen3-embedding
+   ollama pull gemma3:4b
+   ollama pull qwen3-embedding:4b
    ```
 
 ## Installation
@@ -84,11 +84,13 @@ The application provides several REST endpoints:
 
 ### Basic Usage (CLI)
 
-Load a PDF and start chatting:
+Load a PDF and build (or rebuild) the Chroma vector store that the API uses:
 
 ```bash
 python ai_course_chatbot/setup_vector_store.py --pdf path/to/your/document.pdf
 ```
+
+> The CLI helper only ingests PDFs and prepares the database. Run the FastAPI server (see "Web Interface") to chat with the documents you just loaded.
 
 ### Multiple PDFs
 
@@ -100,11 +102,11 @@ python ai_course_chatbot/setup_vector_store.py --pdf file1.pdf file2.pdf file3.p
 
 ### Custom Model
 
-Use a different Ollama model (or set `OLLAMA_MODEL` environment variable). The project defaults to `mistral-small`.
+The FastAPI service instantiates `RAGChatbot` with `gemma3:4b` by default. Override it by setting `OLLAMA_MODEL` before starting the server, or by passing the `--model` flag to the ingestion CLI (which sets `OLLAMA_MODEL` for downstream chat sessions):
 
 ```bash
-python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --model mistral-small
-# or set environment variable: export OLLAMA_MODEL=mistral-small  (Windows: set OLLAMA_MODEL=mistral-small)
+export OLLAMA_MODEL=gemma3:2b-instruct  # choose any Ollama model you've pulled
+uvicorn ai_course_chatbot.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### HTTP API example: POST /pdf/download
@@ -190,20 +192,27 @@ Notes:
    and `SQLAlchemy` are installed so the SQL transport and result backend
    function correctly.
 
-### Force Reload
+### Rebuild the Vector Store
 
-Force reload PDFs even if vector store exists:
+By default, `setup_vector_store.py` **appends** new documents to the existing Chroma collection with automatic deduplication. This allows you to incrementally add documents without losing existing data:
 
 ```bash
-python main.py --pdf document.pdf --reload
+python ai_course_chatbot/setup_vector_store.py --pdf new_document.pdf
 ```
+
+To **completely rebuild** the collection (clearing all existing documents first), use the `--rebuild` flag:
+
+```bash
+python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --rebuild
+```
+
+Use `--rebuild` when you need to start fresh, such as when changing embedding models or fixing corrupted data.
 
 ### Available Options
 
-- `--pdf`: Path(s) to PDF file(s) to load (required for first run)
-- `--model`: Ollama LLM model to use (default: mistral-small). You can also set the `OLLAMA_MODEL` env var.
-- `--embedding-model`: Ollama embedding model (default: qwen3-embedding)
-- `--reload`: Force reload PDFs into vector store
+- `--pdf`: Path(s) to PDF file(s) to load (required)
+- `--rebuild`: Clear the existing collection before loading documents (optional; default is to append with deduplication)
+- `--model`, `--embedding-model`: Runtime chat behavior is controlled via the `OLLAMA_MODEL` environment variable.
 
 ## How It Works
 
@@ -231,7 +240,7 @@ python main.py --pdf document.pdf --reload
 │                      (rag_chatbot.py)                           │
 │  ┌──────────────────┐          ┌──────────────────┐             │
 │  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (mistral-small)│             │
+│  │  RetrievalQA     │          │   (gemma3:4b)    │             │
 │  └─────────┬────────┘          └──────────────────┘             │
 └────────────┼────────────────────────────────────────────────────┘
          │
@@ -272,7 +281,7 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
                    ▲
                    │
                 Ollama Embeddings
-               (qwen3-embedding)
+               (qwen3-embedding:4b)
 ```
 
 Notes:
@@ -281,33 +290,36 @@ Notes:
 
 ### Components
 
-- **PDF Loader (`pdf_loader.py`)**: loads and chunks PDFs (default chunk size 1000, overlap 200).
--- **Vector Store (`vector_store.py`)**: manages embeddings and stores them in ChromaDB (embedding model: `qwen3-embedding`).
-- **RAG Chatbot (`rag_chatbot.py`)**: handles queries, retrieval, and LLM generation using Ollama.
-- **Chat Router (`chat_router.py`)**: FastAPI endpoints for web-based chat interface.
-- **Web Interface (`static/`)**: HTML, CSS, and JavaScript for the chat UI.
-- **Worker (`worker.py`)**: Celery tasks for background processing (SQLite SQLAlchemy transport/result backend).
-- **Monitoring**: FastAPI endpoints `/monitoring/` and `/monitoring/celery-task` expose task info using an SQLite DB fallback when inspect returns empty.
+- **PDF Loader (`ai_modules/pdf_loader.py`)**: extracts and chunks PDF text (chunk size 1000, overlap 200) for downstream embeddings.
+- **Vector Store (`ai_modules/vector_store.py`)**: wraps ChromaDB plus Ollama `qwen3-embedding:4b` embeddings, handling add/load/search operations.
+- **RAG Chatbot (`ai_modules/rag_chatbot.py`)**: wires the retriever into LangChain's `RetrievalQA` and proxies to the Ollama chat model (default `gemma3:4b`).
+- **Routers (`routers/`)**: `chat_router.py` serves chat/status, `pdf_router.py` schedules ingestion jobs, and `monitoring.py` exposes Celery task visibility.
+- **Controllers (`controllers/`)**: shared helpers to download/upload PDFs and to inspect Celery's SQLite result backend.
+- **Worker (`worker.py`)**: Celery task `update_vector_store` that rebuilds the Chroma collection asynchronously when PDF uploads/downloads finish.
+- **Web Interface (`static/`)**: HTML, CSS, and JavaScript assets served by FastAPI to provide the chat UI.
 
 ## Project Structure
 
 ```
 ai-course-chatbot/
-├── ai_course_chatbot/   # Python package
-│   ├── main.py          # Main application entry point (FastAPI)
-│   ├── setup_vector_store.py
-│   ├── worker.py
-│   ├── ai_modules/      # pdf_loader, vector_store, rag_chatbot, etc.
-│   ├── models/          # Pydantic models for requests/responses
-│   ├── routers/         # FastAPI routers (chat, pdf, monitoring)
-│   └── static/          # Frontend assets (HTML, CSS, JS)
-│       ├── index.html   # Chat interface
-│       ├── css/
-│       └── js/
-├── tests/               # Test suite
-├── requirements.txt     # Python dependencies
-├── README.md            # This file
-└── chroma_db/           # Vector database storage (created automatically)
+├── ai_course_chatbot/           # Application package
+│   ├── ai_modules/              # pdf_loader, vector_store, rag_chatbot
+│   ├── controllers/             # download helpers + Celery status helpers
+│   ├── models/                  # Pydantic request/response objects
+│   ├── routers/                 # chat, pdf, and monitoring FastAPI routers
+│   ├── static/                  # Frontend assets (index.html, css, js)
+│   ├── main.py                  # FastAPI entry point
+│   ├── setup_vector_store.py    # CLI helper to ingest PDFs
+│   └── worker.py                # Celery tasks
+├── data/
+│   └── examples_to_run.txt      # Sample prompts and document references
+├── tests/                       # Pytest suite exercising loaders/routers
+├── example.py                   # Minimal script demonstrating programmatic use
+├── ARCHITECTURE.md              # Detailed architecture notes
+├── QUICKSTART.md                # Condensed setup guide
+├── requirements.txt             # Python dependencies
+├── README.md                    # This document
+└── chroma_db/                   # Generated ChromaDB persistence directory
 ```
 
 ## Example Interaction
@@ -341,10 +353,10 @@ Creating vector store...
 Added 125 documents to vector store
 Vector store created successfully!
 
-Initializing chatbot with model: mistral-small
+Initializing chatbot with model: gemma3:4b
 
 ============================================================
-AI RAG Chatbot (Model: mistral-small)
+AI RAG Chatbot (Model: gemma3:4b)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 
@@ -368,7 +380,7 @@ Goodbye!
 
 ### Memory Issues
 - Reduce chunk size in `pdf_loader.py` if processing large PDFs
-- Use smaller models (e.g., `mistral-small`) when running on limited hardware
+- Use smaller models (e.g., `gemma3:4b`) when running on limited hardware
 
 ### Import Errors
 - Reinstall dependencies: `pip install -r requirements.txt --upgrade`

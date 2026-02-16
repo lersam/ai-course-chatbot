@@ -11,8 +11,8 @@ This guide will help you get the AI RAG Chatbot up and running in minutes.
 3. Pull required models:
 
 ```bash
-ollama pull mistral-small
-ollama pull qwen3-embedding
+ollama pull gemma3:4b
+ollama pull qwen3-embedding:4b
 ```
 
 Verify Ollama is running:
@@ -41,37 +41,34 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Step 3: Run the Chatbot
+## Step 3: Ingest Your PDFs
 
-### First Time - Load a PDF
-
-```bash
-python main.py --pdf your_document.pdf
-```
-
-Replace `your_document.pdf` with the path to your PDF file.
-
-### Subsequent Runs
-
-After the first run, the vector store is saved, so you can start chatting without reloading:
+Build (or rebuild) the Chroma vector store using the ingestion helper. Pass every PDF you want available in the chatbot:
 
 ```bash
-python main.py
+python ai_course_chatbot/setup_vector_store.py --pdf doc1.pdf doc2.pdf doc3.pdf
 ```
 
-### Load Multiple PDFs
+> The helper reuses the existing persisted Chroma collection, appending new content and deduplicating existing entries. Rerun this command whenever you add or update documents so the changes are reflected in the chatbot.
+
+## Step 4: Start the Web Server
+
+Launch the FastAPI service and open the chat UI in your browser:
 
 ```bash
-python main.py --pdf doc1.pdf doc2.pdf doc3.pdf
+uvicorn ai_course_chatbot.main:app --host 0.0.0.0 --port 8000 --reload
+# then browse to http://localhost:8000
 ```
 
-## Step 4: Chat with Your Documents
+The server preloads the vector store you created in Step 3 and serves the chat interface at `/`.
+
+## Step 5: Chat with Your Documents
 
 Once the chatbot starts, you'll see:
 
 ```
 ============================================================
-AI RAG Chatbot (Model: mistral-small)
+AI RAG Chatbot (Model: gemma3:4b)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 
@@ -98,21 +95,19 @@ Goodbye!
 
 ### Use a Different Model
 
+Set `OLLAMA_MODEL` before starting the FastAPI server to override the default `gemma3:4b` (be sure to `ollama pull` the model first):
+
 ```bash
-python main.py --pdf document.pdf --model mistral
+export OLLAMA_MODEL=gemma3:2b-instruct
+uvicorn ai_course_chatbot.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Make sure to pull the model first:
-```bash
-ollama pull mistral
-```
+### Rebuild the Vector Store
 
-### Force Reload PDFs
-
-If you've updated your PDFs and want to reload them:
+Whenever PDFs change, rerun the ingestion helper with the updated file list:
 
 ```bash
-python main.py --pdf document.pdf --reload
+python ai_course_chatbot/setup_vector_store.py --pdf updated.pdf more.pdf
 ```
 
 ## Troubleshooting

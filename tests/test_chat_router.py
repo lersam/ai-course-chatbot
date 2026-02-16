@@ -16,41 +16,48 @@ client = TestClient(app)
 
 
 def test_chat_status_not_ready():
-    """Test status endpoint when vector store is not initialized"""
-    # Reset the chatbot instance
+    """Chat status reports not_ready when the collection is empty."""
     chat_router._chatbot_instance = None
-    
-    with patch.object(VectorStore, 'load_existing', return_value=False):
+
+    mock_vector_store = Mock(spec=VectorStore)
+    mock_vector_store.has_documents.return_value = False
+
+    with patch(
+        "ai_course_chatbot.routers.chat_router.VectorStore",
+        return_value=mock_vector_store
+    ):
         response = client.get("/chat/status")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "not_ready"
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "not_ready"
+    assert "Vector store is empty" in data["message"]
 
 
 def test_chat_status_ready():
-    """Test status endpoint when chatbot is ready"""
-    # Mock chatbot
+    """Chat status reports ready when chatbot initializes successfully."""
+    chat_router._chatbot_instance = None
+
     mock_vector_store = Mock(spec=VectorStore)
-    mock_vector_store.load_existing.return_value = True
-    mock_vector_store.get_retriever.return_value = Mock()
-    
-    with patch.object(VectorStore, '__init__', return_value=None):
-        with patch.object(VectorStore, 'load_existing', return_value=True):
-            with patch('ai_course_chatbot.routers.chat_router.RAGChatbot') as mock_chatbot_class:
-                mock_chatbot = Mock()
-                mock_chatbot.model_name = "test-model"
-                mock_chatbot_class.return_value = mock_chatbot
-                
-                # Reset and set instance
-                chat_router._chatbot_instance = mock_chatbot
-                
-                response = client.get("/chat/status")
-                assert response.status_code == 200
-                data = response.json()
-                assert data["status"] == "ready"
-                assert data["model"] == "test-model"
-    
-    # Clean up
+    mock_vector_store.has_documents.return_value = True
+    mock_chatbot = Mock(spec=RAGChatbot)
+    mock_chatbot.model_name = "test-model"
+
+    with patch(
+        "ai_course_chatbot.routers.chat_router.VectorStore",
+        return_value=mock_vector_store
+    ):
+        with patch(
+            "ai_course_chatbot.routers.chat_router.RAGChatbot",
+            return_value=mock_chatbot
+        ):
+            response = client.get("/chat/status")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ready"
+    assert data["model"] == "test-model"
+
     chat_router._chatbot_instance = None
 
 

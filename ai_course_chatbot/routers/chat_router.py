@@ -30,20 +30,45 @@ def get_chatbot() -> RAGChatbot:
         vector_store = VectorStore(
             collection_name="pdf_documents",
             persist_directory="./chroma_db",
-            embedding_model="qwen3-embedding"
+            embedding_model="qwen3-embedding:4b"
         )
-        
-        # Try to load existing vector store
-        if not vector_store.load_existing():
+
+        # Verify that the vector store is actually populated / available.
+        # If we can determine that it has zero documents, treat the chatbot as not ready.
+        try:
+            doc_count = None
+
+            # Prefer an explicit helper if VectorStore provides one
+            if hasattr(vector_store, "get_document_count"):
+                doc_count = vector_store.get_document_count()  # type: ignore[attr-defined]
+            # Fallback: inspect an underlying collection with a count() method
+            elif hasattr(vector_store, "collection") and hasattr(vector_store.collection, "count"):
+                doc_count = vector_store.collection.count()  # type: ignore[union-attr]
+
+            if doc_count is not None and doc_count == 0:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Vector store is empty. Please ingest PDF documents before using the chatbot.",
+                )
+        except HTTPException:
+            # Propagate readiness failures as-is so callers can distinguish 503 status.
+            raise
+        except Exception:
+            # If we cannot verify readiness due to an unexpected error, also treat as not ready.
             raise HTTPException(
                 status_code=503,
-                detail="Vector store not initialized. Please upload PDF documents first using /pdf/download or /pdf/upload endpoints."
+                detail="Unable to verify vector store readiness. Please ensure PDF documents have been ingested.",
             )
-        
+        if not vector_store.has_documents():
+            raise HTTPException(
+                status_code=503,
+                detail="Vector store is empty. Run setup_vector_store.py with your PDFs before chatting."
+            )
+
         # Initialize chatbot
         _chatbot_instance = RAGChatbot(
             vector_store=vector_store,
-            model_name=os.getenv("OLLAMA_MODEL", "mistral-small"),
+            model_name=os.getenv("OLLAMA_MODEL", "gemma3:4b"),
             temperature=0.7
         )
     

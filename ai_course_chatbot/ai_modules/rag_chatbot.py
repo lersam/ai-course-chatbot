@@ -14,7 +14,7 @@ class RAGChatbot:
     """RAG-based chatbot using Ollama for LLM."""
 
     def __init__(self, vector_store: VectorStore,
-                 model_name: str = "mistral-small",
+                 model_name: str = "gemma3:4b",
                  temperature: float = 0.7):
         """
         Initialize the RAG chatbot.
