@@ -111,7 +111,7 @@ uvicorn ai_course_chatbot.main:app --host 0.0.0.0 --port 8000 --reload
 
 ### HTTP API example: POST /pdf/download
 
-Instead of using the CLI, you can call the FastAPI endpoint directly to download and queue a PDF for processing (this example posts a JSON body). The `topics` field accepts one of the Topics enum values (for example `GameProgrammingBooks`).
+Instead of using the CLI, you can call the FastAPI endpoint directly to download and queue a PDF for processing (this example posts a JSON body).
 
 Curl example:
 
@@ -129,8 +129,7 @@ import requests
 resp = requests.post(
       "http://localhost:8000/pdf/download",
       json={
-            "url": "https://inventwithpython.com/makinggames.pdf",
-            "topics": "GameProgrammingBooks"
+            "url": "https://inventwithpython.com/makinggames.pdf"
       }
 )
 print(resp.json())
