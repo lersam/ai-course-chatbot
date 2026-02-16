@@ -122,8 +122,7 @@ class VectorStore:
             Retriever object
         """
         if self.vectorstore is None:
-            raise ValueError(
-                "Vector store not initialized. Please load documents first using add_documents().")
+            raise ValueError("Vector store not initialized. Please load documents first using add_documents().")
 
         return self.vectorstore.as_retriever(search_kwargs={"k": k})
 
@@ -176,7 +175,7 @@ class VectorStore:
 
     def _get_existing_ids(self, candidate_ids: List[str]) -> set:
         """Retrieve the subset of candidate IDs that already exist in the store."""
-        if not candidate_ids or self.vectorstore is None:
+        if self.vectorstore is None:
             return set()
 
         try:
