@@ -194,16 +194,25 @@ Notes:
 
 ### Rebuild the Vector Store
 
-Every execution of `setup_vector_store.py` recreates the Chroma collection using the PDFs you provide. Re-run it whenever you update your source material:
+By default, `setup_vector_store.py` **appends** new documents to the existing Chroma collection with automatic deduplication. This allows you to incrementally add documents without losing existing data:
 
 ```bash
-python ai_course_chatbot/setup_vector_store.py --pdf document.pdf
+python ai_course_chatbot/setup_vector_store.py --pdf new_document.pdf
 ```
+
+To **completely rebuild** the collection (clearing all existing documents first), use the `--rebuild` flag:
+
+```bash
+python ai_course_chatbot/setup_vector_store.py --pdf document.pdf --rebuild
+```
+
+Use `--rebuild` when you need to start fresh, such as when changing embedding models or fixing corrupted data.
 
 ### Available Options
 
-- `--pdf`: Path(s) to PDF file(s) to load (required each time you rebuild the store)
-- `--model`, `--embedding-model`, `--reload`: Reserved for future enhancements. Runtime chat behavior is controlled via the `OLLAMA_MODEL` environment variable.
+- `--pdf`: Path(s) to PDF file(s) to load (required)
+- `--rebuild`: Clear the existing collection before loading documents (optional; default is to append with deduplication)
+- `--model`, `--embedding-model`: Runtime chat behavior is controlled via the `OLLAMA_MODEL` environment variable.
 
 ## How It Works
 

@@ -13,17 +13,19 @@ def setup_vector_store(
     *,
     embedding_model: str = "qwen3-embedding:4b",
     ollama_model: str | None = None,
+    rebuild: bool = False,
 ) -> VectorStore | None:
     """
-    Load PDF files into a new VectorStore and return it.
+    Load PDF files into a VectorStore and return it.
 
-    This function only handles loading the provided PDF files into a VectorStore.
-    It does not try to detect or load an existing vector store on disk.
+    By default, this function appends new documents to the existing collection
+    with deduplication. Use rebuild=True to clear the collection first.
 
     Args:
         pdf_paths: List of PDF paths to load (required)
         embedding_model: Ollama embedding model used to generate vector representations
         ollama_model: Optional chat model name (logged for reference)
+        rebuild: If True, clear the collection before loading documents
 
     Returns:
         VectorStore instance populated with the documents, or None if no documents were loaded.
@@ -37,6 +39,11 @@ def setup_vector_store(
 
     # Create a new vector store (uses default persist_directory unless overridden by VectorStore)
     vector_store = VectorStore(embedding_model=embedding_model)
+
+    # Clear collection if rebuild flag is set
+    if rebuild:
+        print("Rebuild flag set: clearing existing collection...")
+        vector_store.clear_collection()
 
     # Load PDFs
     print("Loading PDF files...")
@@ -61,6 +68,8 @@ def main():
     parser.add_argument("--model", default="gemma3:4b", help="Ollama model to use for chat (default: gemma3:4b)")
     parser.add_argument("--embedding-model", default="qwen3-embedding:4b",
                         help="Ollama embedding model to use (default: qwen3-embedding:4b)")
+    parser.add_argument("--rebuild", action="store_true",
+                        help="Clear the existing collection before loading documents (default: append/deduplicate)")
 
 
     args = parser.parse_args()
@@ -78,6 +87,7 @@ def main():
         args.pdf,
         embedding_model=args.embedding_model,
         ollama_model=args.model,
+        rebuild=args.rebuild,
     )
 
 
