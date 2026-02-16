@@ -7,6 +7,7 @@ from celery import Celery
 
 from ai_course_chatbot.setup_vector_store import setup_vector_store
 from ai_course_chatbot.config import DOWNLOAD_DIR
+from ai_course_chatbot.utils import validate_url_safety
 
 
 # Ensure the Celery app has a stable project name and imports this module
@@ -56,6 +57,9 @@ def download_pdf_task(self, pdf_url: str):
         pass
     
     try:
+        # Validate URL to prevent SSRF attacks
+        validate_url_safety(pdf_url)
+        
         # Ensure download directory exists
         pathlib.Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
         
