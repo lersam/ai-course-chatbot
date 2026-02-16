@@ -5,16 +5,15 @@ Manages document embeddings and vector storage using ChromaDB.
 import os
 import hashlib
 import time
-from typing import Tuple
+from langchain_ollama import OllamaEmbeddings
+from langchain_chroma import Chroma
+
+from typing import List, Tuple
 from pathlib import Path
 
 # Disable LangChain/Chroma telemetry at import time to keep the CLI offline-only.
 os.environ.setdefault("LANGCHAIN_TELEMETRY", "false")
 os.environ.setdefault("ANONYMIZED_TELEMETRY", "false")
-
-from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
-from typing import List
 
 
 class VectorStore:
@@ -25,7 +24,7 @@ class VectorStore:
                  embedding_model: str = "qwen3-embedding:4b"):
         """
         Initialize the vector store.
-        
+
         Args:
             collection_name: Name of the collection in ChromaDB
             persist_directory: Directory to persist the database
@@ -50,7 +49,7 @@ class VectorStore:
     def add_documents(self, documents: List) -> None:
         """
         Add documents to the vector store.
-        
+
         Args:
             documents: List of document chunks to add
         """
@@ -87,8 +86,8 @@ class VectorStore:
 
         batch_size = 64
         for i in range(0, len(filtered_docs), batch_size):
-            batch_docs = filtered_docs[i : i + batch_size]
-            batch_ids = filtered_ids[i : i + batch_size]
+            batch_docs = filtered_docs[i: i + batch_size]
+            batch_ids = filtered_ids[i: i + batch_size]
             start = time.time()
             new_ids = self.vectorstore.add_documents(batch_docs, ids=batch_ids)
             end = time.time()
@@ -103,7 +102,7 @@ class VectorStore:
     def load_existing(self) -> bool:
         """
         Load an existing vector store from disk.
-        
+
         Returns:
             True if loaded successfully, False otherwise
         """
@@ -122,11 +121,11 @@ class VectorStore:
     def similarity_search(self, query: str, k: int = 4) -> List:
         """
         Search for similar documents.
-        
+
         Args:
             query: Search query
             k: Number of results to return
-            
+
         Returns:
             List of similar documents
         """
@@ -140,10 +139,10 @@ class VectorStore:
     def get_retriever(self, k: int = 2):
         """
         Get a retriever for the vector store.
-        
+
         Args:
             k: Number of documents to retrieve (default: 2 for optimal performance)
-            
+
         Returns:
             Retriever object
         """
@@ -153,7 +152,7 @@ class VectorStore:
 
         return self.vectorstore.as_retriever(search_kwargs={"k": k})
 
-    def _prepare_documents(self, documents: List)-> Tuple[List, List[str]]:
+    def _prepare_documents(self, documents: List) -> Tuple[List, List[str]]:
         """Normalize metadata and generate stable IDs for each document."""
         normalized_docs = []
         doc_ids = []
