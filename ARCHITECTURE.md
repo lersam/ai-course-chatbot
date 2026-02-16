@@ -155,7 +155,9 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `main()`: Parses CLI arguments and invokes `setup_vector_store` when `--pdf` values are provided.
 - **Arguments**:
   - `--pdf`: One or more PDF files (required). The helper raises if no PDFs are supplied.
-  - `--model`, `--embedding-model`, `--reload`: Currently placeholders; the ingestion path always uses the defaults baked into `VectorStore` and does not support incremental reloads.
+  - `--model`: Overrides the default chat model by setting the `OLLAMA_MODEL` environment variable before building the `VectorStore`.
+  - `--embedding-model`: Embedding model name passed into `VectorStore` to control which embedding model is used for ingestion.
+  - `--reload`: Currently a placeholder; ingestion always rebuilds the collection from scratch and does not yet support incremental reloads.
 
 ## External Dependencies
 
