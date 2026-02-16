@@ -33,6 +33,12 @@ def get_chatbot() -> RAGChatbot:
             embedding_model="qwen3-embedding:4b"
         )
 
+        if not vector_store.has_documents():
+            raise HTTPException(
+                status_code=503,
+                detail="Vector store is empty. Run setup_vector_store.py with your PDFs before chatting."
+            )
+
         # Initialize chatbot
         _chatbot_instance = RAGChatbot(
             vector_store=vector_store,

@@ -16,19 +16,22 @@ client = TestClient(app)
 
 
 def test_chat_status_not_ready():
-    """Chat status reports not_ready when initialization raises HTTPException."""
+    """Chat status reports not_ready when the collection is empty."""
     chat_router._chatbot_instance = None
+
+    mock_vector_store = Mock(spec=VectorStore)
+    mock_vector_store.has_documents.return_value = False
 
     with patch(
         "ai_course_chatbot.routers.chat_router.VectorStore",
-        side_effect=HTTPException(status_code=500, detail="Vector store unavailable")
+        return_value=mock_vector_store
     ):
         response = client.get("/chat/status")
 
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "not_ready"
-    assert "Vector store unavailable" in data["message"]
+    assert "Vector store is empty" in data["message"]
 
 
 def test_chat_status_ready():
@@ -36,6 +39,7 @@ def test_chat_status_ready():
     chat_router._chatbot_instance = None
 
     mock_vector_store = Mock(spec=VectorStore)
+    mock_vector_store.has_documents.return_value = True
     mock_chatbot = Mock(spec=RAGChatbot)
     mock_chatbot.model_name = "test-model"
 

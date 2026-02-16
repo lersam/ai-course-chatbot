@@ -127,6 +127,24 @@ class VectorStore:
 
         return self.vectorstore.as_retriever(search_kwargs={"k": k})
 
+    def document_count(self) -> int:
+        """Return the number of stored documents in the active collection."""
+        if self.vectorstore is None:
+            return 0
+
+        try:
+            collection = getattr(self.vectorstore, "_collection", None)
+            if collection is not None:
+                return int(collection.count())
+        except Exception:
+            pass
+
+        return 0
+
+    def has_documents(self) -> bool:
+        """Check whether the collection contains at least one document."""
+        return self.document_count() > 0
+
     def _prepare_documents(self, documents: List) -> Tuple[List, List[str]]:
         """Normalize metadata and generate stable IDs for each document."""
         normalized_docs = []
