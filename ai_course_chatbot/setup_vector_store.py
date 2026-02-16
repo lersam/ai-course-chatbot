@@ -61,7 +61,7 @@ def main():
     parser.add_argument("--model", default="gemma3:4b", help="Ollama model to use for chat (default: gemma3:4b)")
     parser.add_argument("--embedding-model", default="qwen3-embedding:4b",
                         help="Ollama embedding model to use (default: qwen3-embedding:4b)")
-    parser.add_argument("--reload", action="store_true", help="Force reload PDFs even if vector store exists")
+
 
     args = parser.parse_args()
 

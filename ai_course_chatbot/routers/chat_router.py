@@ -33,6 +33,32 @@ def get_chatbot() -> RAGChatbot:
             embedding_model="qwen3-embedding:4b"
         )
 
+        # Verify that the vector store is actually populated / available.
+        # If we can determine that it has zero documents, treat the chatbot as not ready.
+        try:
+            doc_count = None
+
+            # Prefer an explicit helper if VectorStore provides one
+            if hasattr(vector_store, "get_document_count"):
+                doc_count = vector_store.get_document_count()  # type: ignore[attr-defined]
+            # Fallback: inspect an underlying collection with a count() method
+            elif hasattr(vector_store, "collection") and hasattr(vector_store.collection, "count"):
+                doc_count = vector_store.collection.count()  # type: ignore[union-attr]
+
+            if doc_count is not None and doc_count == 0:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Vector store is empty. Please ingest PDF documents before using the chatbot.",
+                )
+        except HTTPException:
+            # Propagate readiness failures as-is so callers can distinguish 503 status.
+            raise
+        except Exception:
+            # If we cannot verify readiness due to an unexpected error, also treat as not ready.
+            raise HTTPException(
+                status_code=503,
+                detail="Unable to verify vector store readiness. Please ensure PDF documents have been ingested.",
+            )
         if not vector_store.has_documents():
             raise HTTPException(
                 status_code=503,
