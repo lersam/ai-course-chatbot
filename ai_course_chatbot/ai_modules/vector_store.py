@@ -3,6 +3,9 @@ Vector Store Module
 Manages document embeddings and vector storage using ChromaDB.
 """
 import os
+import hashlib
+import time
+from typing import Tuple
 from pathlib import Path
 
 # Disable LangChain/Chroma telemetry at import time to keep the CLI offline-only.
@@ -38,7 +41,11 @@ class VectorStore:
         self.embeddings = OllamaEmbeddings(model=embedding_model)
 
         # Initialize ChromaDB vector store
-        self.vectorstore = None
+        self.vectorstore = Chroma(
+            collection_name=self.collection_name,
+            embedding_function=self.embeddings,
+            persist_directory=self.persist_directory
+        )
 
     def add_documents(self, documents: List) -> None:
         """
@@ -51,48 +58,47 @@ class VectorStore:
             print("Warning: Empty document list provided, no documents will be added")
             return
 
-        if self.vectorstore is None:
-            # Create new vector store and add documents in batches to improve throughput.
-            # Normalize document metadata: store only filename stem for `source` to avoid full paths
-            for doc in documents:
-                try:
-                    md = getattr(doc, "metadata", None)
-                    if isinstance(md, dict):
-                        src = md.get("source")
-                        if isinstance(src, str) and src:
-                            p = Path(src)
-                            if p.is_absolute() or p.name != src:
-                                md["source"] = p.stem
-                except Exception:
-                    pass
+        normalized_docs, candidate_ids = self._prepare_documents(documents)
 
-            # Create an empty Chroma instance (avoid doing a single large from_documents call)
+        if self.vectorstore is None:
             self.vectorstore = Chroma(
                 collection_name=self.collection_name,
                 embedding_function=self.embeddings,
                 persist_directory=self.persist_directory
             )
 
-            # Add documents in batches to reduce per-call overhead
-            batch_size = 64
-            for i in range(0, len(documents), batch_size):
-                batch = documents[i : i + batch_size]
-                new_ids = self.vectorstore.add_documents(batch)
-                print(f"Added batch of {len(batch)} documents with IDs: {new_ids}")
+        existing_ids = self._get_existing_ids(candidate_ids)
+        filtered_docs = []
+        filtered_ids = []
+        skipped = 0
+        seen_ids = set()
 
-            # Attempt a single persist at the end if supported by the Chroma instance
-            try:
-                if hasattr(self.vectorstore, "persist"):
-                    self.vectorstore.persist()
-            except Exception:
-                # Non-fatal: some Chroma wrappers may not expose persist or may persist automatically
-                pass
-        else:
-            # Add to existing vector store
-            new_ids = self.vectorstore.add_documents(documents)
-            print(f"Added {len(documents)} documents with IDs: {new_ids}")
+        for doc_id, doc in zip(candidate_ids, normalized_docs):
+            if doc_id in existing_ids or doc_id in seen_ids:
+                skipped += 1
+                continue
+            seen_ids.add(doc_id)
+            filtered_ids.append(doc_id)
+            filtered_docs.append(doc)
 
-        print(f"Added {len(documents)} documents to vector store")
+        if not filtered_docs:
+            print("All provided documents already exist in the vector store; nothing to add.")
+            return
+
+        batch_size = 64
+        for i in range(0, len(filtered_docs), batch_size):
+            batch_docs = filtered_docs[i : i + batch_size]
+            batch_ids = filtered_ids[i : i + batch_size]
+            start = time.time()
+            new_ids = self.vectorstore.add_documents(batch_docs, ids=batch_ids)
+            end = time.time()
+            print(f"Added batch of {len(batch_docs)} documents with IDs: {new_ids} in {end - start:.2f} seconds")
+
+        self._persist_vectorstore()
+
+        if skipped:
+            print(f"Skipped {skipped} duplicate documents based on deterministic IDs.")
+        print(f"Added {len(filtered_docs)} new documents to vector store")
 
     def load_existing(self) -> bool:
         """
@@ -146,3 +152,51 @@ class VectorStore:
                 "Vector store not initialized. Please load documents first using add_documents() or load_existing().")
 
         return self.vectorstore.as_retriever(search_kwargs={"k": k})
+
+    def _prepare_documents(self, documents: List)-> Tuple[List, List[str]]:
+        """Normalize metadata and generate stable IDs for each document."""
+        normalized_docs = []
+        doc_ids = []
+        for doc in documents:
+            metadata = getattr(doc, "metadata", None)
+            if not isinstance(metadata, dict):
+                metadata = {}
+                setattr(doc, "metadata", metadata)
+
+            source = metadata.get("source")
+            if isinstance(source, str) and source:
+                path = Path(source)
+                if path.is_absolute() or path.name != source:
+                    metadata["source"] = path.stem
+
+            content = getattr(doc, "page_content", "") or ""
+            content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+            metadata["content_hash"] = content_hash
+
+            page = metadata.get("page", 0)
+            normalized_source = metadata.get("source", "unknown")
+            doc_id = f"{normalized_source}:{page}:{content_hash[:16]}"
+
+            normalized_docs.append(doc)
+            doc_ids.append(doc_id)
+
+        return normalized_docs, doc_ids
+
+    def _get_existing_ids(self, candidate_ids: List[str]) -> set:
+        """Retrieve the subset of candidate IDs that already exist in the store."""
+        if not candidate_ids or self.vectorstore is None:
+            return set()
+
+        try:
+            response = self.vectorstore.get(ids=candidate_ids, include=[])
+            return set(response.get("ids", []))
+        except Exception:
+            return set()
+
+    def _persist_vectorstore(self) -> None:
+        """Persist the vector store safely if the backend supports it."""
+        try:
+            if hasattr(self.vectorstore, "persist"):
+                self.vectorstore.persist()
+        except Exception:
+            pass
