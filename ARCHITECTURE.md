@@ -61,7 +61,7 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
 ```
 
 Notes:
-- The helper function `setup_vector_store(pdf_paths)` strictly accepts explicit PDF paths and rebuilds the collection from scratch; it never attempts to auto-detect or append to an old store.
+- The helper function `setup_vector_store(pdf_paths)` strictly accepts explicit PDF paths and ingests them into the existing persisted collection; it does not auto-discover PDFs but relies on append/dedup behavior in the underlying vector store.
 - Each chunk receives a deterministic ID derived from `source`, `page`, and a SHA-256 hash of its text. This allows fast duplicate filtering before issuing writes.
 - If no PDFs are provided or no documents are extracted, the function returns `None` (and the CLI reports the issue). This keeps ingestion deterministic and explicit.
 
