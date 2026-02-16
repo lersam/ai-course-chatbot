@@ -203,7 +203,9 @@ python ai_course_chatbot/setup_vector_store.py --pdf document.pdf
 ### Available Options
 
 - `--pdf`: Path(s) to PDF file(s) to load (required each time you rebuild the store)
-- `--model`, `--embedding-model`, `--reload`: Reserved for future enhancements. Runtime chat behavior is controlled via the `OLLAMA_MODEL` environment variable.
+- `--model`: Name of the Ollama chat model to use when building the vector store (sets the model for this run).
+- `--embedding-model`: Name of the Ollama embedding model to use when generating document embeddings.
+- `--reload`: Reserved for future enhancements; currently unused.
 
 ## How It Works
 
