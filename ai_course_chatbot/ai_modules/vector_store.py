@@ -21,7 +21,7 @@ class VectorStore:
 
     def __init__(self, collection_name: str = "pdf_documents",
                  persist_directory: str = "./chroma_db",
-                 embedding_model: str = "qwen3-embedding:4b"):
+                 embedding_model: str = "nomic-embed-text"):
         """
         Initialize the vector store.
 
@@ -34,17 +34,27 @@ class VectorStore:
         self.persist_directory = persist_directory
         self.embedding_model = embedding_model
 
+        # Ensure the directory exists but defer creating the actual Chroma
+        # client and Ollama embeddings until they're needed. This avoids
+        # opening/locking on-disk DB files during simple unit tests that
+        # only instantiate the class or call add_documents([]).
         Path(persist_directory).mkdir(parents=True, exist_ok=True)
 
-        # Initialize Ollama embeddings
-        self.embeddings = OllamaEmbeddings(model=embedding_model)
+        # Lazy-initialized attributes
+        self.embeddings = None
+        self.vectorstore = None
 
-        # Initialize ChromaDB vector store
-        self.vectorstore = Chroma(
-            collection_name=self.collection_name,
-            embedding_function=self.embeddings,
-            persist_directory=self.persist_directory
-        )
+    def _ensure_initialized(self):
+        """Initialize embeddings and the underlying Chroma vectorstore when required."""
+        if self.embeddings is None:
+            self.embeddings = OllamaEmbeddings(model=self.embedding_model)
+
+        if self.vectorstore is None:
+            self.vectorstore = Chroma(
+                collection_name=self.collection_name,
+                embedding_function=self.embeddings,
+                persist_directory=self.persist_directory
+            )
 
     def add_documents(self, documents: List) -> None:
         """
@@ -56,6 +66,9 @@ class VectorStore:
         if not documents:
             print("Warning: Empty document list provided, no documents will be added")
             return
+
+        # Ensure the vectorstore is ready before preparing/adding documents
+        self._ensure_initialized()
 
         normalized_docs, candidate_ids = self._prepare_documents(documents)
 
@@ -104,9 +117,9 @@ class VectorStore:
         Returns:
             List of similar documents
         """
+        # Initialize if needed and then run search
         if self.vectorstore is None:
-            print("Warning: Vector store not initialized. Please load documents first.")
-            return []
+            self._ensure_initialized()
 
         results = self.vectorstore.similarity_search(query, k=k)
         return results
@@ -121,9 +134,8 @@ class VectorStore:
         Returns:
             Retriever object
         """
-        if self.vectorstore is None:
-            raise ValueError("Vector store not initialized. Please load documents first using add_documents().")
-
+        # Ensure vectorstore is available and return a retriever
+        self._ensure_initialized()
         return self.vectorstore.as_retriever(search_kwargs={"k": k})
 
     def document_count(self) -> int:
@@ -152,10 +164,15 @@ class VectorStore:
         effectively rebuilding it from scratch. Use this when you want to
         start fresh rather than append/deduplicate.
         """
+        # If not initialized, there's nothing to clear on disk
         if self.vectorstore is None:
-            print("Warning: Vector store not initialized.")
-            return
-        
+            # Attempt to initialize to delete an existing on-disk collection
+            try:
+                self._ensure_initialized()
+            except Exception:
+                print("Warning: Vector store not initialized.")
+                return
+
         try:
             # Get the underlying ChromaDB client and delete the collection
             client = self.vectorstore._client
