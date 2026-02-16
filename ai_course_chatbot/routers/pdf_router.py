@@ -7,7 +7,8 @@ from starlette import status
 
 from ai_course_chatbot.models.pdf_request import PDFRequest
 from ai_course_chatbot.worker import update_vector_store
-from ai_course_chatbot.controllers import download_file, save_upload_file_bytes, DOWNLOAD_DIR
+from ai_course_chatbot.controllers import download_file, save_upload_file_bytes
+from ai_course_chatbot.config import DOWNLOAD_DIR
 
 router = APIRouter(
     prefix="/pdf",

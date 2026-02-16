@@ -64,14 +64,23 @@ def download_pdf_task(self, pdf_url: str):
         pathlib.Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
         
         # Extract filename from URL
-        filename = os.path.basename(pdf_url)
+        from urllib.parse import urlparse
+        parsed = urlparse(pdf_url)
+        filename = os.path.basename(parsed.path)
         if not filename:
             filename = f"downloaded_{self.request.id}.pdf"
         
         dest_path = os.path.join(DOWNLOAD_DIR, filename)
         
-        # Download the PDF
-        urllib.request.urlretrieve(pdf_url, dest_path)
+        # Download the PDF using requests (respects SSRF protections, no redirects)
+        import requests
+        response = requests.get(pdf_url, timeout=30, allow_redirects=False)
+        response.raise_for_status()
+        
+        # Write the content to file
+        with open(dest_path, 'wb') as f:
+            f.write(response.content)
+        
         print(f"Downloaded PDF to {dest_path}")
         
         # Update vector store with the downloaded PDF
