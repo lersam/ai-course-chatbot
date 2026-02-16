@@ -1,16 +1,12 @@
 import os
 import pathlib
-import tempfile
 import urllib.request
 
 
 from celery import Celery
 
 from ai_course_chatbot.setup_vector_store import setup_vector_store
-
-
-# Define DOWNLOAD_DIR directly to avoid circular import
-DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), "ai-course-chatbot", "downloads")
+from ai_course_chatbot.config import DOWNLOAD_DIR
 
 
 # Ensure the Celery app has a stable project name and imports this module

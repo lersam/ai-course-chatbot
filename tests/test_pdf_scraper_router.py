@@ -86,3 +86,35 @@ def test_scrape_and_download_scraping_error():
     
     assert response.status_code == 500
     assert "Failed to scrape" in response.json()["detail"]
+
+
+def test_scrape_and_download_invalid_url_scheme():
+    """Test scrape-and-download with invalid URL scheme"""
+    with patch(
+        "ai_course_chatbot.routers.pdf_scraper_router.scrape_pdf_links",
+        new_callable=AsyncMock,
+        side_effect=Exception("Failed to scrape PDF links from file:///etc/passwd: Invalid URL scheme: file. Only http and https are allowed.")
+    ):
+        response = client.post(
+            "/pdf/scrape-and-download",
+            json={"url": "file:///etc/passwd"}
+        )
+    
+    assert response.status_code == 500
+    assert "Invalid URL scheme" in response.json()["detail"]
+
+
+def test_scrape_and_download_localhost_blocked():
+    """Test scrape-and-download blocks localhost access"""
+    with patch(
+        "ai_course_chatbot.routers.pdf_scraper_router.scrape_pdf_links",
+        new_callable=AsyncMock,
+        side_effect=Exception("Failed to scrape PDF links from http://localhost/admin: Access to private/local networks is not allowed: localhost")
+    ):
+        response = client.post(
+            "/pdf/scrape-and-download",
+            json={"url": "http://localhost/admin"}
+        )
+    
+    assert response.status_code == 500
+    assert "private/local networks" in response.json()["detail"]

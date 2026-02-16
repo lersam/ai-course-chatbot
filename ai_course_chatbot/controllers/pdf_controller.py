@@ -1,5 +1,4 @@
 import os
-import tempfile
 import asyncio
 import urllib.request
 from typing import List
@@ -7,8 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
-# Use the system default temporary directory
-DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), "ai-course-chatbot", "downloads")
+from ai_course_chatbot.config import DOWNLOAD_DIR
 
 
 async def download_file(url: str, dest_path: str):
@@ -30,6 +28,29 @@ async def scrape_pdf_links(url: str) -> List[str]:
     """Scrape all PDF links from a given URL."""
     def _sync_scrape():
         try:
+            # Validate URL scheme to prevent SSRF attacks
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            if parsed.scheme not in ('http', 'https'):
+                raise ValueError(f"Invalid URL scheme: {parsed.scheme}. Only http and https are allowed.")
+            
+            # Prevent access to localhost and private IP ranges
+            hostname = parsed.hostname
+            if hostname:
+                hostname_lower = hostname.lower()
+                if (hostname_lower in ('localhost', '127.0.0.1', '0.0.0.0') or
+                    hostname_lower.startswith('192.168.') or
+                    hostname_lower.startswith('10.') or
+                    hostname_lower.startswith('172.16.') or
+                    hostname_lower.startswith('172.17.') or
+                    hostname_lower.startswith('172.18.') or
+                    hostname_lower.startswith('172.19.') or
+                    hostname_lower.startswith('172.2') or
+                    hostname_lower.startswith('172.30.') or
+                    hostname_lower.startswith('172.31.') or
+                    hostname_lower.startswith('169.254.')):
+                    raise ValueError(f"Access to private/local networks is not allowed: {hostname}")
+            
             response = requests.get(url, timeout=30)
             response.raise_for_status()
             
