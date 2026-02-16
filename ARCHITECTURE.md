@@ -105,7 +105,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `similarity_search()`: Search for similar documents
   - `get_retriever()`: Get retriever for RAG
 - **Storage**: ChromaDB (persistent on disk)
--- **Embeddings**: Ollama qwen3-embedding:4b
+- **Embeddings**: Ollama qwen3-embedding:4b
 
 ### RAG Chatbot (`rag_chatbot.py`)
 - **Purpose**: Handle user queries with RAG
