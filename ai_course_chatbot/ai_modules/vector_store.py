@@ -144,6 +144,43 @@ class VectorStore:
         """Check whether the collection contains at least one document."""
         return self.document_count() > 0
 
+    def clear_collection(self) -> None:
+        """
+        Clear all documents from the collection.
+        
+        This completely removes all documents from the ChromaDB collection,
+        effectively rebuilding it from scratch. Use this when you want to
+        start fresh rather than append/deduplicate.
+        """
+        if self.vectorstore is None:
+            print("Warning: Vector store not initialized.")
+            return
+        
+        try:
+            # Get the underlying ChromaDB client and delete the collection
+            client = self.vectorstore._client
+            try:
+                client.delete_collection(name=self.collection_name)
+                print(f"Cleared collection '{self.collection_name}'")
+            except ValueError:
+                # Collection doesn't exist, which is fine - nothing to clear
+                print(f"Collection '{self.collection_name}' does not exist; skipping deletion")
+            except Exception as e:
+                # Log unexpected errors during deletion but continue to recreate
+                print(f"Warning: Unexpected error deleting collection: {e}")
+            
+            # Recreate the collection with the same settings
+            self.vectorstore = Chroma(
+                collection_name=self.collection_name,
+                embedding_function=self.embeddings,
+                persist_directory=self.persist_directory
+            )
+            print(f"Recreated empty collection '{self.collection_name}'")
+        except Exception as e:
+            # Fatal error during recreation - log and re-raise
+            print(f"Error recreating collection: {e}")
+            raise
+
     def _prepare_documents(self, documents: List) -> Tuple[List, List[str]]:
         """Normalize metadata and generate stable IDs for each document."""
         normalized_docs = []
