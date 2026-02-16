@@ -32,14 +32,7 @@ def get_chatbot() -> RAGChatbot:
             persist_directory="./chroma_db",
             embedding_model="qwen3-embedding:4b"
         )
-        
-        # Try to load existing vector store
-        if not vector_store.load_existing():
-            raise HTTPException(
-                status_code=503,
-                detail="Vector store not initialized. Please upload PDF documents first using /pdf/download or /pdf/upload endpoints."
-            )
-        
+
         # Initialize chatbot
         _chatbot_instance = RAGChatbot(
             vector_store=vector_store,

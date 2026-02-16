@@ -26,12 +26,13 @@ def example_usage():
         persist_directory="./example_chroma_db"
     )
 
-    # 3. Load existing vector store or create new one
-    if not vector_store.load_existing():
-        print("Loading PDFs...")
-        documents = pdf_loader.load_and_chunk_pdfs(pdf_files)
-        if documents:
-            vector_store.add_documents(documents)
+    # 3. Ingest PDFs into the vector store
+    print("Loading PDFs...")
+    documents = pdf_loader.load_and_chunk_pdfs(pdf_files)
+    if documents:
+        vector_store.add_documents(documents)
+    else:
+        print("No documents produced by loader; vector store left unchanged.")
 
     # 4. Initialize chatbot
     chatbot = RAGChatbot(

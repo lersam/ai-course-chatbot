@@ -59,13 +59,6 @@ class VectorStore:
 
         normalized_docs, candidate_ids = self._prepare_documents(documents)
 
-        if self.vectorstore is None:
-            self.vectorstore = Chroma(
-                collection_name=self.collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=self.persist_directory
-            )
-
         existing_ids = self._get_existing_ids(candidate_ids)
         filtered_docs = []
         filtered_ids = []
@@ -99,24 +92,6 @@ class VectorStore:
             print(f"Skipped {skipped} duplicate documents based on deterministic IDs.")
         print(f"Added {len(filtered_docs)} new documents to vector store")
 
-    def load_existing(self) -> bool:
-        """
-        Load an existing vector store from disk.
-
-        Returns:
-            True if loaded successfully, False otherwise
-        """
-        try:
-            self.vectorstore = Chroma(
-                collection_name=self.collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=self.persist_directory
-            )
-            print("Loaded existing vector store")
-            return True
-        except Exception as e:
-            print(f"Vector store does not exist yet or failed to load: {e}")
-            return False
 
     def similarity_search(self, query: str, k: int = 4) -> List:
         """
@@ -148,7 +123,7 @@ class VectorStore:
         """
         if self.vectorstore is None:
             raise ValueError(
-                "Vector store not initialized. Please load documents first using add_documents() or load_existing().")
+                "Vector store not initialized. Please load documents first using add_documents().")
 
         return self.vectorstore.as_retriever(search_kwargs={"k": k})
 
