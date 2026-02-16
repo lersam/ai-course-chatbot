@@ -68,7 +68,7 @@ class RAGChatbot:
             The answer from the chatbot
         """
         try:
-            result = self.qa_chain({"query": question})
+            result = self.qa_chain.invoke({"query": question})
             answer = result["result"]
 
             if show_sources and "source_documents" in result:

@@ -20,7 +20,7 @@
                 "ai_course_chatbot.worker.celery",
                 "worker",
                 "-l",
-                "debug",
+                "info",
                 "-P",
                 "solo"
             ]
