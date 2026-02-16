@@ -30,7 +30,7 @@ def get_chatbot() -> RAGChatbot:
         vector_store = VectorStore(
             collection_name="pdf_documents",
             persist_directory="./chroma_db",
-            embedding_model="qwen3-embedding:4b"
+            embedding_model="nomic-embed-text"
         )
 
         # Verify that the vector store is actually populated / available.

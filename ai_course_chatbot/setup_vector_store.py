@@ -11,7 +11,7 @@ from ai_course_chatbot.ai_modules import VectorStore, PDFLoader
 def setup_vector_store(
     pdf_paths: list[str],
     *,
-    embedding_model: str = "qwen3-embedding:4b",
+    embedding_model: str = "nomic-embed-text",
     ollama_model: str | None = None,
     rebuild: bool = False,
 ) -> VectorStore | None:
@@ -66,8 +66,8 @@ def main():
     parser = argparse.ArgumentParser(description="AI RAG Chatbot - Chat with your PDF documents using Ollama")
     parser.add_argument("--pdf", nargs="+", help="Path(s) to PDF file(s) to load")
     parser.add_argument("--model", default="gemma3:4b", help="Ollama model to use for chat (default: gemma3:4b)")
-    parser.add_argument("--embedding-model", default="qwen3-embedding:4b",
-                        help="Ollama embedding model to use (default: qwen3-embedding:4b)")
+    parser.add_argument("--embedding-model", default="nomic-embed-text",
+                        help="Embedding model to use for vectorization (default: nomic-embed-text)")
     parser.add_argument("--rebuild", action="store_true",
                         help="Clear the existing collection before loading documents (default: append/deduplicate)")
 
