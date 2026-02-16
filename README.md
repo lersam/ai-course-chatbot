@@ -102,7 +102,7 @@ python ai_course_chatbot/setup_vector_store.py --pdf file1.pdf file2.pdf file3.p
 
 ### Custom Model
 
-The FastAPI service instantiates `RAGChatbot` with `gemma3:4b` by default. Override it by setting `OLLAMA_MODEL` before starting the server (the ingestion CLI does not yet use the `--model` flag):
+The FastAPI service instantiates `RAGChatbot` with `gemma3:4b` by default. Override it by setting `OLLAMA_MODEL` before starting the server, or by passing the `--model` flag to the ingestion CLI (which sets `OLLAMA_MODEL` for downstream chat sessions):
 
 ```bash
 export OLLAMA_MODEL=gemma3:2b-instruct  # choose any Ollama model you've pulled

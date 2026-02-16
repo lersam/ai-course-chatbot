@@ -2,7 +2,7 @@
 Tests for the chat router
 """
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch
 
