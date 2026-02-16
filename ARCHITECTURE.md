@@ -57,7 +57,7 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
                                            ▲
                                            │
                                     Ollama Embeddings
-                                    (qwen3-embedding:4b)
+                                    (nomic-embed-text)
 ```
 
 Notes:
@@ -163,7 +163,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
 ## External Dependencies
 
 - **gemma3:4b-it-qat**: Language model for text generation
-- **qwen3-embedding:4b**: Embedding model for vector representations
+- **nomic-embed-text**: Embedding model for vector representations
 
 ### Python Libraries
 - **langchain / langchain-community**: Retrieval orchestration and integrations
