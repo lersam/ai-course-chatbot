@@ -13,10 +13,10 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                      RAG Chatbot Layer                          │
 │                      (rag_chatbot.py)                           │
-│  ┌──────────────────┐          ┌──────────────────┐             │
-│  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (gemma3:4b)    │             │
-│  └─────────┬────────┘          └──────────────────┘             │
+│  ┌──────────────────┐          ┌───────────────────────┐        │
+│  │  Query Handler   │◄────────►│   Ollama LLM          │        │
+│  │  RetrievalQA     │          │   (gemma3:4b-it-qat)  │        │
+│  └─────────┬────────┘          └───────────────────────┘        │
 └────────────┼────────────────────────────────────────────────────┘
              │
              ▼
@@ -78,7 +78,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
                             │
                             ▼
                       Ollama LLM
-                       (gemma3:4b)
+                       (gemma3:4b-it-qat)
                             │
                             ▼
                    Generated Answer + Sources
@@ -162,7 +162,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
 
 ## External Dependencies
 
-- **gemma3:4b**: Language model for text generation
+- **gemma3:4b-it-qat**: Language model for text generation
 - **qwen3-embedding:4b**: Embedding model for vector representations
 
 ### Python Libraries
@@ -176,14 +176,14 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
 ## Configuration
 
 ### Environment Variables
-- `OLLAMA_MODEL` — overrides the default `gemma3:4b` that `chat_router` uses when instantiating `RAGChatbot`.
+- `OLLAMA_MODEL` — overrides the default `gemma3:4b-it-qat` that `chat_router` uses when instantiating `RAGChatbot`.
 - `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` — allow pointing the worker at a non-SQLite broker or backend (default to local SQLite files).
 - `LANGCHAIN_TELEMETRY` / `ANONYMIZED_TELEMETRY` — set to `false` by `vector_store.py` to keep ingestion offline.
 
 ### Default Settings
 - Chunk size: 1000 characters
 - Chunk overlap: 200 characters
-- LLM model: gemma3:4b (override via `OLLAMA_MODEL`)
+- LLM model: gemma3:4b-it-qat (override via `OLLAMA_MODEL`)
 - Embedding model: nomic-embed-text
 - Temperature: 0.7
 - Retrieval k: 4 documents

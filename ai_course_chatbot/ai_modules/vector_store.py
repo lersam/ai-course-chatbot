@@ -84,7 +84,7 @@ class VectorStore:
             start = time.time()
             new_ids = self.vectorstore.add_documents(batch_docs, ids=batch_ids)
             end = time.time()
-            print(f"Added batch of {len(batch_docs)} documents with IDs: {new_ids} in {end - start:.2f} seconds")
+            print(f"Processed {i + len(batch_docs)} / {len(documents)} documents; in {end - start:.2f} seconds")
 
         self._persist_vectorstore()
 

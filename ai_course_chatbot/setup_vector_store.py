@@ -60,7 +60,7 @@ def main():
     """Main application entry point."""
     parser = argparse.ArgumentParser(description="AI RAG Chatbot - Chat with your PDF documents using Ollama")
     parser.add_argument("--pdf", nargs="+", help="Path(s) to PDF file(s) to load")
-    parser.add_argument("--model", default="gemma3:4b", help="Ollama model to use for chat (default: gemma3:4b)")
+    parser.add_argument("--model", default="gemma3:4b-it-qat", help="Ollama model to use for chat (default: gemma3:4b-it-qat)")
     parser.add_argument("--embedding-model", default="nomic-embed-text",
                         help="Embedding model to use for vectorization (default: nomic-embed-text)")
 

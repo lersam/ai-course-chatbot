@@ -11,7 +11,7 @@ This guide will help you get the AI RAG Chatbot up and running in minutes.
 3. Pull required models:
 
 ```bash
-ollama pull gemma3:4b
+ollama pull gemma3:4b-it-qat
 ollama pull nomic-embed-text
 ```
 
@@ -68,7 +68,7 @@ Once the chatbot starts, you'll see:
 
 ```
 ============================================================
-AI RAG Chatbot (Model: gemma3:4b)
+AI RAG Chatbot (Model: gemma3:4b-it-qat)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 
@@ -95,7 +95,7 @@ Goodbye!
 
 ### Use a Different Model
 
-Set `OLLAMA_MODEL` before starting the FastAPI server to override the default `gemma3:4b` (be sure to `ollama pull` the model first):
+Set `OLLAMA_MODEL` before starting the FastAPI server to override the default `gemma3:4b-it-qat` (be sure to `ollama pull` the model first):
 
 ```bash
 export OLLAMA_MODEL=gemma3:2b-instruct

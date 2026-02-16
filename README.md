@@ -21,7 +21,7 @@ Before running the application, ensure you have:
    - Install from: https://ollama.ai
    - Pull required models:
    ```bash
-   ollama pull gemma3:4b
+   ollama pull gemma3:4b-it-qat
    ollama pull nomic-embed-text
    ```
 
@@ -102,7 +102,7 @@ python ai_course_chatbot/setup_vector_store.py --pdf file1.pdf file2.pdf file3.p
 
 ### Custom Model
 
-The FastAPI service instantiates `RAGChatbot` with `gemma3:4b` by default. Override it by setting `OLLAMA_MODEL` before starting the server, or by passing the `--model` flag to the ingestion CLI (which sets `OLLAMA_MODEL` for downstream chat sessions):
+The FastAPI service instantiates `RAGChatbot` with `gemma3:4b-it-qat` by default. Override it by setting `OLLAMA_MODEL` before starting the server, or by passing the `--model` flag to the ingestion CLI (which sets `OLLAMA_MODEL` for downstream chat sessions):
 
 ```bash
 export OLLAMA_MODEL=gemma3:2b-instruct  # choose any Ollama model you've pulled
@@ -238,10 +238,10 @@ Use `--rebuild` when you need to start fresh, such as when changing embedding mo
 ┌─────────────────────────────────────────────────────────────────┐
 │                      RAG Chatbot Layer                          │
 │                      (rag_chatbot.py)                           │
-│  ┌──────────────────┐          ┌──────────────────┐             │
-│  │  Query Handler   │◄────────►│   Ollama LLM     │             │
-│  │  RetrievalQA     │          │   (gemma3:4b)    │             │
-│  └─────────┬────────┘          └──────────────────┘             │
+│  ┌──────────────────┐          ┌────────────────────────┐       │
+│  │  Query Handler   │◄────────►│   Ollama LLM           │       │
+│  │  RetrievalQA     │          │   (gemma3:4b-it-qat)   │       │
+│  └─────────┬────────┘          └────────────────────────┘       │
 └────────────┼────────────────────────────────────────────────────┘
          │
          ▼
@@ -292,7 +292,7 @@ Notes:
 
 - **PDF Loader (`ai_modules/pdf_loader.py`)**: extracts and chunks PDF text (chunk size 1000, overlap 200) for downstream embeddings.
 - **Vector Store (`ai_modules/vector_store.py`)**: wraps ChromaDB plus `nomic-embed-text` embeddings, handling add/load/search operations.
-- **RAG Chatbot (`ai_modules/rag_chatbot.py`)**: wires the retriever into LangChain's `RetrievalQA` and proxies to the Ollama chat model (default `gemma3:4b`).
+- **RAG Chatbot (`ai_modules/rag_chatbot.py`)**: wires the retriever into LangChain's `RetrievalQA` and proxies to the Ollama chat model (default `gemma3:4b-it-qat`).
 - **Routers (`routers/`)**: `chat_router.py` serves chat/status, `pdf_router.py` schedules ingestion jobs, and `monitoring.py` exposes Celery task visibility.
 - **Controllers (`controllers/`)**: shared helpers to download/upload PDFs and to inspect Celery's SQLite result backend.
 - **Worker (`worker.py`)**: Celery task `update_vector_store` that rebuilds the Chroma collection asynchronously when PDF uploads/downloads finish.
@@ -353,10 +353,10 @@ Creating vector store...
 Added 125 documents to vector store
 Vector store created successfully!
 
-Initializing chatbot with model: gemma3:4b
+Initializing chatbot with model: gemma3:4b-it-qat
 
 ============================================================
-AI RAG Chatbot (Model: gemma3:4b)
+AI RAG Chatbot (Model: gemma3:4b-it-qat)
 ============================================================
 Type 'quit' or 'exit' to end the conversation.
 
@@ -380,7 +380,7 @@ Goodbye!
 
 ### Memory Issues
 - Reduce chunk size in `pdf_loader.py` if processing large PDFs
-- Use smaller models (e.g., `gemma3:4b`) when running on limited hardware
+- Use smaller models (e.g., `gemma3:4b-it-qat`) when running on limited hardware
 
 ### Import Errors
 - Reinstall dependencies: `pip install -r requirements.txt --upgrade`

@@ -69,10 +69,10 @@ class TestRAGChatbot(unittest.TestCase):
             # Initialize chatbot
             chatbot = RAGChatbot(
                 vector_store=mock_vector_store,
-                model_name="gemma3:4b"
+                model_name="gemma3:4b-it-qat"
             )
             
-            self.assertEqual(chatbot.model_name, "gemma3:4b")
+            self.assertEqual(chatbot.model_name, "gemma3:4b-it-qat")
             self.assertIsNotNone(chatbot.prompt_template)
 
 
