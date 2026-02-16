@@ -49,7 +49,7 @@ Build (or rebuild) the Chroma vector store using the ingestion helper. Pass ever
 python ai_course_chatbot/setup_vector_store.py --pdf doc1.pdf doc2.pdf doc3.pdf
 ```
 
-> The helper overwrites the collection each time you run it, so rerun whenever you add or update documents.
+> The helper reuses the existing persisted Chroma collection, appending new content and deduplicating existing entries. Rerun this command whenever you add or update documents so the changes are reflected in the chatbot.
 
 ## Step 4: Start the Web Server
 
