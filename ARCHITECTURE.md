@@ -61,8 +61,9 @@ PDF Files → PDF Loader → Text Chunks → Embeddings → Vector Store
 ```
 
 Notes:
-- The helper function `setup_vector_store(pdf_paths)` now strictly accepts explicit PDF paths and loads those PDFs into a newly-created `VectorStore`. It does not attempt to auto-detect or load an existing vector store on disk.
-- If no PDFs are provided or no documents are extracted, the function will return None (and the CLI will report the issue). This makes ingestion deterministic and explicit.
+- The helper function `setup_vector_store(pdf_paths)` strictly accepts explicit PDF paths and rebuilds the collection from scratch; it never attempts to auto-detect or append to an old store.
+- Each chunk receives a deterministic ID derived from `source`, `page`, and a SHA-256 hash of its text. This allows fast duplicate filtering before issuing writes.
+- If no PDFs are provided or no documents are extracted, the function returns `None` (and the CLI reports the issue). This keeps ingestion deterministic and explicit.
 
 ### 2. Query Processing
 ```
@@ -98,13 +99,12 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `chunk_overlap`: 200 characters (default)
 
 ### Vector Store (`vector_store.py`)
-- **Purpose**: Manage document embeddings and retrieval
+- **Purpose**: Manage document embeddings, enforce deduplication, and surface retrievers
 - **Key Functions**:
-  - `add_documents()`: Add documents to vector store
-  - `load_existing()`: Load existing vector store (kept for backward compatibility but not used by `setup_vector_store`)
+  - `add_documents()`: Normalizes metadata, generates deterministic IDs, filters existing hashes, and batches inserts
   - `similarity_search()`: Search for similar documents
   - `get_retriever()`: Get retriever for RAG
-- **Storage**: ChromaDB (persistent on disk)
+- **Storage**: ChromaDB (persistent on disk with per-batch persistence helper)
 - **Embeddings**: Ollama qwen3-embedding:4b
 
 ### RAG Chatbot (`rag_chatbot.py`)
@@ -125,12 +125,12 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
 - **Responsibilities**:
   - Registers the `chat`, `pdf`, and `monitoring` routers.
   - Mounts `static/` (HTML/CSS/JS) under `/static` and serves `index.html` at `/`.
-  - Calls `chat_router.get_chatbot()` during lifespan startup to pre-load the vector store and model when possible.
+  - Calls `chat_router.get_chatbot()` during lifespan startup to instantiate a fresh `VectorStore`/`RAGChatbot` pair (ingestion must already have populated `./chroma_db`).
 
 ### Routers (`routers/`)
 - **`chat_router.py`**
-  - Loads `VectorStore` from `./chroma_db` and instantiates `RAGChatbot` with `OLLAMA_MODEL` (default `gemma3:4b`).
-  - Exposes `POST /chat/` and `GET /chat/status`.
+  - Instantiates a new `VectorStore` pointing at `./chroma_db` when the first chat/status call arrives; it assumes ingestion already built the on-disk collection and no longer tries to `load_existing()` explicitly.
+  - Exposes `POST /chat/` and `GET /chat/status` (status reports `ready` once the chatbot instance exists, `not_ready` if initialization raised an HTTP error).
 - **`pdf_router.py`**
   - Accepts `POST /pdf/download` (URL ingestion) and `POST /pdf/upload` (multipart uploads).
   - Uses controller helpers to save files to the temp downloads directory and schedules `worker.update_vector_store` via Celery.
