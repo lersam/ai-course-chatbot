@@ -1,9 +1,12 @@
 import os
+import pathlib
+import urllib.request
 
 
 from celery import Celery
 
 from ai_course_chatbot.setup_vector_store import setup_vector_store
+from ai_course_chatbot.controllers import DOWNLOAD_DIR
 
 
 # Ensure the Celery app has a stable project name and imports this module
@@ -40,3 +43,47 @@ def update_vector_store(self, pdf_paths: list[str]):
     else:
         print("Vector store update failed or no documents were loaded.")
         self.update_state(state="FAILURE", meta={"pdf_paths": pdf_paths})
+
+
+@celery.task(bind=True)
+def download_pdf_task(self, pdf_url: str):
+    """Download a single PDF file from URL and update vector store."""
+    print(f"Starting download for {pdf_url}...")
+    
+    try:
+        self.update_state(state="RUNNING", meta={"pdf_url": pdf_url})
+    except Exception:
+        pass
+    
+    try:
+        # Ensure download directory exists
+        pathlib.Path(DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
+        
+        # Extract filename from URL
+        filename = os.path.basename(pdf_url)
+        if not filename:
+            filename = f"downloaded_{self.request.id}.pdf"
+        
+        dest_path = os.path.join(DOWNLOAD_DIR, filename)
+        
+        # Download the PDF
+        urllib.request.urlretrieve(pdf_url, dest_path)
+        print(f"Downloaded PDF to {dest_path}")
+        
+        # Update vector store with the downloaded PDF
+        vector_store = setup_vector_store([dest_path])
+        
+        if vector_store is not None:
+            print(f"Vector store updated successfully with {dest_path}")
+            self.update_state(state="SUCCESS", meta={"pdf_url": pdf_url, "dest_path": dest_path})
+            return {"status": "success", "pdf_url": pdf_url, "dest_path": dest_path}
+        else:
+            print(f"Vector store update failed for {dest_path}")
+            self.update_state(state="FAILURE", meta={"pdf_url": pdf_url, "error": "Vector store update failed"})
+            return {"status": "failure", "pdf_url": pdf_url, "error": "Vector store update failed"}
+            
+    except Exception as e:
+        error_msg = f"Failed to download PDF from {pdf_url}: {str(e)}"
+        print(error_msg)
+        self.update_state(state="FAILURE", meta={"pdf_url": pdf_url, "error": error_msg})
+        return {"status": "failure", "pdf_url": pdf_url, "error": error_msg}

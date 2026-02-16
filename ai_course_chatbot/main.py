@@ -11,6 +11,7 @@ from starlette import status
 from ai_course_chatbot.routers import pdf_router
 from ai_course_chatbot.routers import monitoring
 from ai_course_chatbot.routers import chat_router
+from ai_course_chatbot.routers import pdf_scraper_router
 
 # Define static directory path once
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
@@ -29,6 +30,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(pdf_router.router)
+app.include_router(pdf_scraper_router.router)
 app.include_router(monitoring.router)
 app.include_router(chat_router.router)
 
