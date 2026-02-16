@@ -102,6 +102,7 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
 - **Purpose**: Manage document embeddings, enforce deduplication, and surface retrievers
 - **Key Functions**:
   - `add_documents()`: Normalizes metadata, generates deterministic IDs, filters existing hashes, and batches inserts
+  - `clear_collection()`: Clears all documents from the collection and recreates it empty
   - `similarity_search()`: Search for similar documents
   - `get_retriever()`: Get retriever for RAG
 - **Storage**: ChromaDB (persistent on disk with per-batch persistence helper)
@@ -149,15 +150,15 @@ User Query → RAG Chatbot → Vector Store (Similarity Search)
   - `update_vector_store` calls `setup_vector_store(pdf_paths)` and manually updates task state to `RUNNING`/`SUCCESS`/`FAILURE` for the monitoring endpoints.
 
 ### Vector Store Builder (`setup_vector_store.py`)
-- **Purpose**: CLI entry point that rebuilds the Chroma collection from an explicit list of PDF paths.
+- **Purpose**: CLI entry point that manages the Chroma collection by appending documents or rebuilding from an explicit list of PDF paths.
 - **Key Functions**:
-  - `setup_vector_store(pdf_paths)`: Loads and chunks PDFs, then writes them into a new `VectorStore` instance. Returns the populated store or `None` if nothing was ingested.
+  - `setup_vector_store(pdf_paths, rebuild=False)`: Loads and chunks PDFs, then writes them into a `VectorStore` instance. By default, appends to existing collection with deduplication. When `rebuild=True`, clears the collection first. Returns the populated store or `None` if nothing was ingested.
   - `main()`: Parses CLI arguments and invokes `setup_vector_store` when `--pdf` values are provided.
 - **Arguments**:
   - `--pdf`: One or more PDF files (required). The helper raises if no PDFs are supplied.
   - `--model`: Overrides the default chat model by setting the `OLLAMA_MODEL` environment variable before building the `VectorStore`.
   - `--embedding-model`: Embedding model name passed into `VectorStore` to control which embedding model is used for ingestion.
-  - `--reload`: Currently a placeholder; ingestion always rebuilds the collection from scratch and does not yet support incremental reloads.
+  - `--rebuild`: Clear the existing collection before loading documents (optional; default is to append with deduplication).
 
 ## External Dependencies
 
