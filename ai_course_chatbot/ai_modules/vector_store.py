@@ -162,9 +162,12 @@ class VectorStore:
             try:
                 client.delete_collection(name=self.collection_name)
                 print(f"Cleared collection '{self.collection_name}'")
-            except Exception:
-                # Collection might not exist, which is fine
-                pass
+            except ValueError:
+                # Collection doesn't exist, which is fine - nothing to clear
+                print(f"Collection '{self.collection_name}' does not exist; skipping deletion")
+            except Exception as e:
+                # Log unexpected errors during deletion but continue to recreate
+                print(f"Warning: Unexpected error deleting collection: {e}")
             
             # Recreate the collection with the same settings
             self.vectorstore = Chroma(
@@ -174,7 +177,8 @@ class VectorStore:
             )
             print(f"Recreated empty collection '{self.collection_name}'")
         except Exception as e:
-            print(f"Warning: Error clearing collection: {e}")
+            # Fatal error during recreation - log and re-raise
+            print(f"Error recreating collection: {e}")
             raise
 
     def _prepare_documents(self, documents: List) -> Tuple[List, List[str]]:
