@@ -14,6 +14,8 @@ def setup_vector_store(
     embedding_model: str = "nomic-embed-text",
     ollama_model: str | None = None,
     rebuild: bool = False,
+    normalize_lower: bool = False,
+    default_lang: str = "en",
 ) -> VectorStore | None:
     """
     Load PDF files into a VectorStore and return it.
@@ -38,7 +40,9 @@ def setup_vector_store(
         print(f"Target chat model (for reference): {ollama_model}")
 
     # Create a new vector store (uses default persist_directory unless overridden by VectorStore)
-    vector_store = VectorStore(embedding_model=embedding_model)
+    vector_store = VectorStore(embedding_model=embedding_model,
+                               normalize_lower=normalize_lower,
+                               default_lang=default_lang)
 
     # Load PDFs
     print("Loading PDF files...")
@@ -63,6 +67,8 @@ def main():
     parser.add_argument("--model", default="gemma3:4b-it-qat", help="Ollama model to use for chat (default: gemma3:4b-it-qat)")
     parser.add_argument("--embedding-model", default="nomic-embed-text",
                         help="Embedding model to use for vectorization (default: nomic-embed-text)")
+    parser.add_argument("--embedding-lower", action="store_true", help="Lowercase text before embedding (normalization)")
+    parser.add_argument("--lang", default="en", help="Default language to tag documents with (default: en)")
 
 
     args = parser.parse_args()
@@ -81,6 +87,8 @@ def main():
         embedding_model=args.embedding_model,
         ollama_model=args.model,
         rebuild=args.rebuild,
+        normalize_lower=args.embedding_lower,
+        default_lang=args.lang,
     )
 
 

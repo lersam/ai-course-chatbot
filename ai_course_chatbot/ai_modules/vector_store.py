@@ -5,6 +5,7 @@ Manages document embeddings and vector storage using ChromaDB.
 import os
 import hashlib
 import time
+import re
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 
@@ -21,7 +22,9 @@ class VectorStore:
 
     def __init__(self, collection_name: str = "pdf_documents",
                  persist_directory: str = "./chroma_db",
-                 embedding_model: str = "nomic-embed-text"):
+                 embedding_model: str = "nomic-embed-text",
+                 normalize_lower: bool = False,
+                 default_lang: str = "en"):
         """
         Initialize the vector store.
 
@@ -33,6 +36,9 @@ class VectorStore:
         self.collection_name = collection_name
         self.persist_directory = persist_directory
         self.embedding_model = embedding_model
+        self.embedding_model_version = embedding_model
+        self.normalize_lower = normalize_lower
+        self.default_lang = default_lang
 
         Path(persist_directory).mkdir(parents=True, exist_ok=True)
 
@@ -139,25 +145,8 @@ class VectorStore:
         normalized_docs = []
         doc_ids = []
         for doc in documents:
-            metadata = getattr(doc, "metadata", None)
-            if not isinstance(metadata, dict):
-                metadata = {}
-                setattr(doc, "metadata", metadata)
-
-            source = metadata.get("source")
-            if isinstance(source, str) and source:
-                path = Path(source)
-                if path.is_absolute() or path.name != source:
-                    metadata["source"] = path.stem
-
-            content = getattr(doc, "page_content", "") or ""
-            content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-            metadata["content_hash"] = content_hash
-
-            page = metadata.get("page", 0)
-            normalized_source = metadata.get("source", "unknown")
-            doc_id = f"{normalized_source}:{page}:{content_hash[:16]}"
-
+            # Delegate normalization and metadata enrichment to helper
+            doc_id = self._normalize_document(doc)
             normalized_docs.append(doc)
             doc_ids.append(doc_id)
 
@@ -173,6 +162,65 @@ class VectorStore:
             return set(response.get("ids", []))
         except Exception:
             return set()
+
+    def _normalize_text(self, text: str) -> str:
+        """Lightweight normalization: collapse whitespace and strip control characters.
+
+        This function intentionally keeps punctuation and headings intact while
+        reducing noisy whitespace and PDF artifacts (formfeeds, repeated spaces).
+        """
+        if not text:
+            return ""
+        # remove common PDF formfeed markers
+        text = text.replace("\x0c", " ")
+        # collapse all whitespace (including newlines) to single spaces
+        text = re.sub(r"\s+", " ", text)
+        return text.strip()
+
+    def _normalize_document(self, doc) -> str:
+        """Normalize a single document's metadata and content and return a deterministic doc id.
+
+        This consolidates all normalization/enrichment steps so other callers can reuse it.
+        """
+        metadata = getattr(doc, "metadata", None)
+        if not isinstance(metadata, dict):
+            metadata = {}
+            setattr(doc, "metadata", metadata)
+
+        # Normalize source and derive title
+        source = metadata.get("source")
+        if isinstance(source, str) and source:
+            path = Path(source)
+            if path.is_absolute() or path.name != source:
+                metadata["source"] = path.stem
+
+        normalized_source = metadata.get("source", "unknown")
+
+        # Normalize content: collapse whitespace, strip control chars
+        content = getattr(doc, "page_content", "") or ""
+        normalized_content = self._normalize_text(content)
+        if self.normalize_lower:
+            normalized_content = normalized_content.lower()
+        # Replace the document content with normalized content
+        setattr(doc, "page_content", normalized_content)
+
+        # Deterministic content hash on normalized content
+        content_hash = hashlib.sha256(normalized_content.encode("utf-8")).hexdigest()
+        metadata["content_hash"] = content_hash
+
+        # Enrich metadata fields to help retrieval/filtering
+        metadata.setdefault("title", normalized_source)
+        metadata.setdefault("section", metadata.get("section", None))
+        metadata.setdefault("page", metadata.get("page", 0))
+        metadata.setdefault("lang", metadata.get("lang", self.default_lang))
+        metadata.setdefault("source_type", metadata.get("source_type", "pdf"))
+        # Record the embedding model used so we can re-embed/track versions later
+        metadata.setdefault("embedding_model", self.embedding_model)
+        metadata.setdefault("embedding_model_version", self.embedding_model_version)
+
+        page = metadata.get("page", 0)
+        doc_id = f"{normalized_source}:{page}:{content_hash[:16]}"
+        return doc_id
 
     def _persist_vectorstore(self) -> None:
         """Persist the vector store safely if the backend supports it."""
