@@ -27,5 +27,9 @@ kombu-sqlalchemy
 SQLAlchemy
 aiosqlite==0.22.1
 
+# Web scraping
+beautifulsoup4==4.12.3
+requests==2.31.0
+
 # Testing
 pytest
