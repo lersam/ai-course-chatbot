@@ -209,7 +209,7 @@ class VectorStore:
         # Deterministic content hash on normalized content
         content_hash = hashlib.sha256(normalized_content.encode("utf-8")).hexdigest()
         metadata["content_hash"] = content_hash
-        metadata["keywords"] = ','.join(gensim.utils.simple_preprocess(normalized_content, deacc=True, min_len=3, max_len=20))
+        metadata["keywords"] = ','.join(set(gensim.utils.simple_preprocess(normalized_content, deacc=True, min_len=3, max_len=20)))
         # Enrich metadata fields to help retrieval/filtering
         metadata.setdefault("title", normalized_source)
         metadata.setdefault("section", metadata.get("section", None))
