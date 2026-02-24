@@ -16,7 +16,7 @@ pypdf==6.6.2
 
 # Vector Store
 chromadb==1.4.1
-
+gensim==4.4.0
 
 # server
 uvicorn
