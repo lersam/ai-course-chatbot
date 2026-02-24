@@ -1,15 +1,6 @@
 The complete Sherlock Holmes - https://sherlock-holm.es/pdf/letter/1-sided/
 *******************************************************************************
 ENGLISH FAIRY TALES - https://andonovicmilica.wordpress.com/wp-content/uploads/2018/10/english-fairy-tales.pdf
-1.  Q: Who collected English Fairy Tales for publication?
-    A: Joseph Jacobs
-
-2.  Q: How many pies did the woman bake?
-    A: five pies
-
-3.  Q: who said “Where are you going, Jack”?
-    A: * A cat * A dog * A goat * A bull * A rooster
-
 *******************************************************************************
 TEENY-TINY
 1. Comprehension Question
@@ -40,7 +31,6 @@ Answer:
 ---
 Question: After failing to blow down the brick house, how does the wolf's tactic change?
 Answer: The wolf's tactic changes to simply stealing the hide of Guy of Gisborne, who was seen pulling it off and riding away with it.
-
 
 -------------------------------------------------------------------------------------
 ROBIN HOOD
