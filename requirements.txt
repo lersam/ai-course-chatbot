@@ -26,10 +26,16 @@ celery
 kombu-sqlalchemy
 SQLAlchemy
 aiosqlite==0.22.1
+pydantic-settings>=2.0
+
+# Caching
+cachetools>=5.3
 
 # Web scraping
 beautifulsoup4==4.12.3
 requests==2.31.0
+httpx>=0.27
 
 # Testing
 pytest
+

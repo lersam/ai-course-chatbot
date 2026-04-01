@@ -1,40 +1,76 @@
-from contextlib import asynccontextmanager
+﻿"""FastAPI application entry point for the AI Course Chatbot."""
+import logging
 import os
+from contextlib import asynccontextmanager
 
 import uvicorn
-
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from starlette import status
 
-from ai_course_chatbot.routers import pdf_router
-from ai_course_chatbot.routers import monitoring
-from ai_course_chatbot.routers import chat_router
-from ai_course_chatbot.routers import pdf_scraper_router
+from ai_course_chatbot.config import get_settings
+from ai_course_chatbot.routers import pdf_router, monitoring, chat_router, pdf_scraper_router
 
-# Define static directory path once
+logger = logging.getLogger(__name__)
+
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+
+
+def _configure_logging() -> None:
+    """Set up root logging based on the configured log level."""
+    settings = get_settings()
+    logging.basicConfig(
+        level=getattr(logging, settings.log_level.upper(), logging.INFO),
+        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Pre-warm chatbot on startup for faster first request
-    print("Initializing chatbot...")
+    _configure_logging()
+    logger.info("Initializing chatbot...")
     try:
         chat_router.get_chatbot()
-        print("Chatbot initialized successfully")
+        logger.info("Chatbot initialized successfully")
     except Exception as e:
-        print(f"Warning: Could not pre-initialize chatbot: {e}")
-        print("Chatbot will be initialized on first request")
+        logger.warning("Could not pre-initialize chatbot: %s", e)
+        logger.info("Chatbot will be initialized on first request")
     yield
 
+
 app = FastAPI(lifespan=lifespan)
+
+# ── CORS ───────────────────────────────────────────────────────────────────
+settings = get_settings()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ── Global exception handler ──────────────────────────────────────────────
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
+# ── Routers ────────────────────────────────────────────────────────────────
 app.include_router(pdf_router.router)
 app.include_router(pdf_scraper_router.router)
 app.include_router(monitoring.router)
 app.include_router(chat_router.router)
 
-# Mount static files
+# ── Static files ───────────────────────────────────────────────────────────
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -46,7 +82,7 @@ async def root():
 
 @app.get("/healthy", status_code=status.HTTP_200_OK, include_in_schema=False)
 def health_check():
-    return {'status': 'Healthy'}
+    return {"status": "Healthy"}
 
 
 if __name__ == "__main__":
