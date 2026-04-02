@@ -25,17 +25,6 @@ async def download_file(url: str, dest_path: str) -> None:
     logger.info("Downloaded %s → %s", url, dest_path)
 
 
-async def save_upload_file_bytes(data: bytes, dest_path: str) -> None:
-    """Write raw bytes to disk in a background thread."""
-    import asyncio
-
-    def _sync_write(d: bytes, p: str) -> None:
-        with open(p, "wb") as f:
-            f.write(d)
-
-    await asyncio.to_thread(_sync_write, data, dest_path)
-
-
 async def scrape_pdf_links(url: str) -> List[str]:
     """Scrape all PDF links from a given URL."""
     validate_url_safety(url)
