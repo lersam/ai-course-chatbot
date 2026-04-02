@@ -1,6 +1,6 @@
 ---
 name: Coder
-description: Writes code following mandatory coding principles.
+description: Writes code following mandatory coding principles. See .github/instructions/python.instruction.md for Python rules.
 model: GPT-5.3-Codex (copilot)
 tools: ['vscode', 'execute', 'read', 'agent', 'context7/*', 'github/*', 'edit', 'search', 'web', 'memory', 'todo']
 ---
