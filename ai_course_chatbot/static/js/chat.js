@@ -339,13 +339,18 @@ async function loadChatHistory() {
 // Clear saved history on server and in the UI
 async function clearChatHistory() {
     try {
-        await fetch('/chat/history', { method: 'DELETE' });
+        const response = await fetch('/chat/history', { method: 'DELETE' });
+        if (!response.ok) {
+            throw new Error(`Failed to clear history: ${response.status}`);
+        }
+
+        // Remove all messages except the welcome message only after server success.
+        const messages = chatMessages.querySelectorAll('.message:not(.welcome-message)');
+        messages.forEach(m => m.remove());
     } catch (err) {
         console.warn('Could not clear history on server:', err);
+        showError('Could not clear chat history. Please try again.');
     }
-    // Remove all messages except the welcome message
-    const messages = chatMessages.querySelectorAll('.message:not(.welcome-message)');
-    messages.forEach(m => m.remove());
 }
 
 // Show error message

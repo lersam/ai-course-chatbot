@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch
 
 from ai_course_chatbot.routers import chat_router
+from ai_course_chatbot.routers.chat_router import _cache_lock, _response_cache
 from ai_course_chatbot.ai_modules import VectorStore, RAGChatbot
 
 
@@ -116,3 +117,17 @@ def test_chat_without_sources():
     
     # Clean up
     chat_router._chatbot_instance = None
+
+
+def test_delete_history_clears_response_cache():
+    """Delete history endpoint also clears the in-memory response cache."""
+    with _cache_lock:
+        _response_cache.clear()
+        _response_cache["test-key"] = {"response": "cached response"}
+
+    with patch("ai_course_chatbot.routers.chat_router.chat_history_service.clear_history"):
+        response = client.delete("/chat/history")
+
+    assert response.status_code == 200
+    with _cache_lock:
+        assert len(_response_cache) == 0

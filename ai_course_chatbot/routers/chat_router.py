@@ -211,6 +211,8 @@ async def get_history():
 async def delete_history():
     """Clear the persisted chat history."""
     chat_history_service.clear_history()
+    with _cache_lock:
+        _response_cache.clear()
     return {"message": "Chat history cleared"}
 
 
