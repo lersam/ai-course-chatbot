@@ -18,6 +18,7 @@ client = TestClient(app)
 def test_chat_status_not_ready():
     """Chat status reports not_ready when the collection is empty."""
     chat_router._chatbot_instance = None
+    chat_router._response_cache.clear()
 
     mock_vector_store = Mock(spec=VectorStore)
     mock_vector_store.has_documents.return_value = False
@@ -37,6 +38,7 @@ def test_chat_status_not_ready():
 def test_chat_status_ready():
     """Chat status reports ready when chatbot initializes successfully."""
     chat_router._chatbot_instance = None
+    chat_router._response_cache.clear()
 
     mock_vector_store = Mock(spec=VectorStore)
     mock_vector_store.has_documents.return_value = True
@@ -56,7 +58,7 @@ def test_chat_status_ready():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ready"
-    assert data["model"] == "test-model"
+    assert "Chatbot is initialized" in data["message"]
 
     chat_router._chatbot_instance = None
 
@@ -69,6 +71,7 @@ def test_chat_empty_message():
 
 def test_chat_successful_response():
     """Test successful chat interaction"""
+    chat_router._response_cache.clear()
     # Mock the chatbot
     mock_chatbot = Mock(spec=RAGChatbot)
     mock_chatbot.model_name = "test-model"
@@ -94,6 +97,7 @@ def test_chat_successful_response():
 
 def test_chat_without_sources():
     """Test chat with sources disabled"""
+    chat_router._response_cache.clear()
     mock_chatbot = Mock(spec=RAGChatbot)
     mock_chatbot.model_name = "test-model"
     mock_chatbot.ask.return_value = "This is a test response."

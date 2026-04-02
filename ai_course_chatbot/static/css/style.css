@@ -361,6 +361,30 @@ footer {
     font-size: 14px;
 }
 
+/* Clear History Button */
+.input-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.clear-history-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clear-history-btn:hover {
+    background: #ffebee;
+    color: #c62828;
+    border-color: #c62828;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {

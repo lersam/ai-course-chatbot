@@ -1,5 +1,6 @@
 import os
 import pathlib
+import asyncio
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from urllib.parse import urlparse
@@ -7,7 +8,7 @@ from starlette import status
 
 from ai_course_chatbot.models.pdf_request import PDFRequest
 from ai_course_chatbot.worker import update_vector_store
-from ai_course_chatbot.controllers import download_file, save_upload_file_bytes
+from ai_course_chatbot.controllers import download_file
 from ai_course_chatbot.config import DOWNLOAD_DIR
 
 router = APIRouter(
@@ -88,7 +89,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     try:
         data = await file.read()
-        await save_upload_file_bytes(data, dest_path)
+        await asyncio.to_thread(pathlib.Path(dest_path).write_bytes, data)
         await file.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {filename}")

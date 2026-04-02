@@ -12,11 +12,15 @@ const statusText = document.getElementById('status-text');
 // State
 let isWaitingForResponse = false;
 
+const clearHistoryBtn = document.getElementById('clear-history-btn');
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     checkStatus();
     setupAutoResize();
     setupFormSubmit();
+    loadChatHistory();
+    clearHistoryBtn.addEventListener('click', clearChatHistory);
 });
 
 // Check chatbot status
@@ -87,49 +91,154 @@ async function sendMessage() {
     sendButton.disabled = true;
     userInput.disabled = true;
 
-    // Show typing indicator
-    const typingIndicator = showTypingIndicator();
+    // Create bot message container for streaming
+    const botMessageDiv = createEmptyBotMessage();
+    const contentEl = botMessageDiv.querySelector('.message-content');
+    let fullText = '';
 
     try {
-        const response = await fetch('/chat/', {
+        const response = await fetch('/chat/stream', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 message: message,
                 show_sources: showSourcesCheckbox.checked
             })
         });
 
-        // Remove typing indicator
-        typingIndicator.remove();
-
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || 'Failed to get response');
+            throw new Error('Stream request failed');
         }
 
-        const data = await response.json();
-        
-        // Add bot response to chat
-        addMessage(data.response, 'bot', data.sources);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-    } catch (error) {
-        typingIndicator.remove();
-        console.error('Error sending message:', error);
-        addMessage(
-            'Sorry, I encountered an error processing your request. Please try again.',
-            'bot'
-        );
-        showError(error.message);
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // Keep incomplete line in buffer
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    if (data === '[DONE]') {
+                        break;
+                    }
+                    if (data.startsWith('[ERROR]')) {
+                        throw new Error(data);
+                    }
+                    fullText += data;
+                    contentEl.textContent = fullText;
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+        }
+
+        // Format final text with paragraphs and sources
+        formatBotMessage(contentEl, fullText);
+
+    } catch (streamError) {
+        console.warn('Streaming failed, falling back to standard endpoint:', streamError);
+        // Fallback to non-streaming endpoint
+        try {
+            const response = await fetch('/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: message,
+                    show_sources: showSourcesCheckbox.checked
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to get response');
+            }
+
+            const data = await response.json();
+            formatBotMessage(contentEl, data.response, data.sources);
+
+        } catch (fallbackError) {
+            contentEl.textContent = 'Sorry, I encountered an error processing your request. Please try again.';
+            showError(fallbackError.message);
+        }
     } finally {
-        // Re-enable input
         isWaitingForResponse = false;
         sendButton.disabled = false;
         userInput.disabled = false;
         userInput.focus();
     }
+}
+
+// Create an empty bot message bubble for streaming
+function createEmptyBotMessage() {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message bot-message';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = '🤖';
+
+    const content = document.createElement('div');
+    content.className = 'message-content';
+
+    messageDiv.appendChild(avatar);
+    messageDiv.appendChild(content);
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    return messageDiv;
+}
+
+// Format bot message with paragraphs and optional sources
+function formatBotMessage(contentEl, text, sources) {
+    contentEl.innerHTML = '';
+
+    // Split sources from text if embedded
+    let responseText = text;
+    let parsedSources = sources || [];
+
+    if (!sources && text.includes('\n\nSources:')) {
+        const parts = text.split('\n\nSources:');
+        responseText = parts[0];
+        if (parts.length > 1) {
+            parsedSources = parts[1].trim().split('\n').filter(s => s.trim());
+        }
+    }
+
+    // Add paragraphs
+    const paragraphs = responseText.split('\n\n').filter(p => p.trim());
+    paragraphs.forEach(para => {
+        const p = document.createElement('p');
+        p.textContent = para;
+        contentEl.appendChild(p);
+    });
+
+    // Add sources
+    if (parsedSources.length > 0) {
+        const sourcesDiv = document.createElement('div');
+        sourcesDiv.className = 'sources';
+
+        const sourcesTitle = document.createElement('div');
+        sourcesTitle.className = 'sources-title';
+        sourcesTitle.textContent = 'Sources:';
+        sourcesDiv.appendChild(sourcesTitle);
+
+        const sourcesList = document.createElement('ul');
+        parsedSources.forEach(source => {
+            const li = document.createElement('li');
+            li.textContent = source;
+            sourcesList.appendChild(li);
+        });
+        sourcesDiv.appendChild(sourcesList);
+        contentEl.appendChild(sourcesDiv);
+    }
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Add message to chat
@@ -206,6 +315,37 @@ function showTypingIndicator() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
     return messageDiv;
+}
+
+// ── Chat history ──────────────────────────────────────────────────────
+
+// Load saved chat history from the server
+async function loadChatHistory() {
+    try {
+        const response = await fetch('/chat/history');
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!data.entries || data.entries.length === 0) return;
+
+        for (const entry of data.entries) {
+            addMessage(entry.user_message, 'user');
+            addMessage(entry.bot_response, 'bot', entry.sources || []);
+        }
+    } catch (err) {
+        console.warn('Could not load chat history:', err);
+    }
+}
+
+// Clear saved history on server and in the UI
+async function clearChatHistory() {
+    try {
+        await fetch('/chat/history', { method: 'DELETE' });
+    } catch (err) {
+        console.warn('Could not clear history on server:', err);
+    }
+    // Remove all messages except the welcome message
+    const messages = chatMessages.querySelectorAll('.message:not(.welcome-message)');
+    messages.forEach(m => m.remove());
 }
 
 // Show error message
