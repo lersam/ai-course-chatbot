@@ -108,7 +108,6 @@ import math
 def calculate_area(radius: float) -> float:
     """
     Calculate the area of a circle given the radius.
-    ...
     """
     return math.pi * radius ** 2
 ```
