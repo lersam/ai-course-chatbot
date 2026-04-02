@@ -103,18 +103,14 @@ from myproject.utils import helper_function
 ## Example of Proper Documentation
 
 ```python
+import math
+
 def calculate_area(radius: float) -> float:
-		"""
-		Calculate the area of a circle given the radius.
-    
-		Parameters:
-		radius (float): The radius of the circle.
-    
-		Returns:
-		float: The area of the circle, calculated as π * radius^2.
-		"""
-		import math
-		return math.pi * radius ** 2
+    """
+    Calculate the area of a circle given the radius.
+    ...
+    """
+    return math.pi * radius ** 2
 ```
 
 ---
