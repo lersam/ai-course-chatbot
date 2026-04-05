@@ -2,7 +2,7 @@
 name: Orchestrator
 description: Sonnet, Codex, Gemini
 model: Claude Opus 4.6 (copilot)
-tools: [read/readFile, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook]
+tools: ['read/readFile', 'agent', 'vscode/memory']
 ---
 
 <!-- Note: Memory is experimental at the moment. You'll need to be in VS Code Insiders and toggle on memory in settings -->
